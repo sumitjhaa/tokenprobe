@@ -1,5 +1,4 @@
-import { Shield, ExternalLink, BookOpen, ShieldCheck } from "lucide-react";
-import { Card } from "../components/ui/Card";
+import { Shield, ExternalLink, BookOpen, ShieldCheck, Zap } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { ErrorBoundary } from "../utils/errors";
 
@@ -14,64 +13,72 @@ const techStack = [
   ["FastAPI", "REST API backend"],
   ["React", "Frontend UI"],
   ["Bun", "JS runtime + build"],
-  ["Tailwind CSS", "Styling"],
   ["Vite", "Build tool"],
 ];
 
 export default function AboutPage() {
   return (
     <ErrorBoundary>
-      <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
-        <div className="text-center">
-          <Shield size={28} className="mx-auto mb-3 text-blue-600 dark:text-blue-400" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">About TokenProbe</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
+        <div className="text-center" style={{ marginBottom: "2rem" }}>
+          <div style={{
+            width: "3rem", height: "3rem", borderRadius: "0.75rem",
+            background: "var(--accent-soft)", display: "flex",
+            alignItems: "center", justifyContent: "center",
+            margin: "0 auto 0.75rem"
+          }}>
+            <Shield size={24} style={{ color: "var(--accent)" }} />
+          </div>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>About TokenProbe</h1>
+          <p style={{ marginTop: "0.25rem", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
             A production-grade security auditing tool for JWT tokens.
           </p>
         </div>
 
-        <Card padding="lg" className="bg-gray-50 dark:bg-gray-900/50">
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Why TokenProbe?</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+        <div className="card" style={{ padding: "1.25rem", background: "var(--bg)", marginBottom: "1.5rem" }}>
+          <h2 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>Why TokenProbe?</h2>
+          <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", lineHeight: 1.7 }}>
             JWTs are the default auth mechanism for modern APIs, but they're commonly misconfigured
             in ways that are silently exploitable. TokenProbe catches these issues in seconds
             with zero setup &mdash; no network calls or configuration.
           </p>
-        </Card>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="flex gap-4 flex-wrap" style={{ justifyContent: "center" }}>
           {features.map((f) => (
-            <Card key={f.label} className="text-center bg-gray-50 dark:bg-gray-900/50" padding="lg" hover>
-              <f.icon size={22} className="mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{f.label}</h3>
-              <p className="text-xs text-gray-500 mt-1">{f.desc}</p>
-            </Card>
+            <div key={f.label} className="card card-hover" style={{ padding: "1.25rem", textAlign: "center", background: "var(--bg)", flex: "1 1 200px", maxWidth: "280px" }}>
+              <f.icon size={22} style={{ margin: "0 auto 0.5rem", color: "var(--accent)" }} />
+              <h3 style={{ fontWeight: 600, fontSize: "0.875rem" }}>{f.label}</h3>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>{f.desc}</p>
+            </div>
           ))}
         </div>
 
-        <Card padding="lg" className="bg-gray-50 dark:bg-gray-900/50">
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Tech Stack</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="card" style={{ padding: "1.25rem", background: "var(--bg)", marginTop: "1.5rem" }}>
+          <h2 style={{ fontWeight: 600, marginBottom: "0.75rem" }}>Tech Stack</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.75rem" }}>
             {techStack.map(([tech, use]) => (
-              <Card key={tech} padding="sm" className="bg-white dark:bg-gray-800/50">
-                <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">{tech}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{use}</div>
-              </Card>
+              <div key={tech} className="card" style={{ padding: "0.75rem", background: "var(--bg-alt)" }}>
+                <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{tech}</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.125rem" }}>{use}</div>
+              </div>
             ))}
           </div>
-        </Card>
+        </div>
 
-        <div className="text-center">
-          <a
-            href="https://github.com/sumitjhaa/tokenprobe"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <div className="flex justify-center" style={{ marginTop: "1.5rem" }}>
+          <a href="https://github.com/sumitjhaa/tokenprobe" target="_blank" rel="noopener noreferrer">
             <Button variant="secondary">
               <ExternalLink size={16} />
               View on GitHub
             </Button>
           </a>
+        </div>
+
+        <div className="flex gap-2 justify-center flex-wrap" style={{ marginTop: "3rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+          <span className="flex items-center gap-1"><Zap size={12} /> 8 static checks</span>
+          <span className="flex items-center gap-1"><Zap size={12} /> 4 JWE checks</span>
+          <span className="flex items-center gap-1"><Zap size={12} /> Instant results</span>
         </div>
       </div>
     </ErrorBoundary>

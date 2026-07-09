@@ -4,7 +4,7 @@ import { Button } from "./ui/Button";
 import { cn } from "../utils/cn";
 import { SAMPLES } from "../samples/tokens";
 
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+const MAX_FILE_SIZE = 1 * 1024 * 1024;
 
 interface Props {
   onAnalyze: (token: string) => void;
@@ -58,14 +58,9 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
   const hasToken = token.trim().length > 0;
 
   return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in">
+    <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
       <div
-        className={cn(
-          "relative border-2 border-dashed rounded-xl p-6 transition-all duration-200",
-          isDragging
-            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60 scale-[1.01]"
-            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500",
-        )}
+        className={cn("dropzone", isDragging && "dropzone-active")}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
@@ -75,12 +70,13 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
           value={token}
           onChange={(e) => setToken(e.target.value)}
           placeholder="Paste your JWT or JWE token here..."
-          className="w-full h-32 p-4 font-mono text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-shadow"
+          className="input"
+          style={{ minHeight: "8rem" }}
           spellCheck={false}
         />
 
         {fileError && (
-          <div className="flex items-center gap-2 mt-3 text-sm text-red-600 dark:text-red-400 animate-fade-in">
+          <div className="flex items-center gap-2 mt-3" style={{ color: "var(--danger)", fontSize: "0.875rem" }}>
             <AlertCircle size={14} />
             {fileError}
           </div>
@@ -91,7 +87,7 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
           type="file"
           accept=".txt,.json,.jwt"
           onChange={handleFileInput}
-          className="hidden"
+          className="sr-only"
         />
 
         <div className="flex flex-wrap gap-2 mt-4">
@@ -106,33 +102,27 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
             <Upload size={14} />
             Open File
           </Button>
-          <div className="relative">
+          <div style={{ position: "relative" }}>
             <Button variant="secondary" onClick={() => setShowSamples(!showSamples)}>
               <FileCode size={14} />
               Samples
               <ChevronDown size={12} />
             </Button>
             {showSamples && (
-              <div className="absolute left-0 top-full mt-1 z-50 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-80 overflow-y-auto animate-scale-in"
-                onMouseLeave={() => setShowSamples(false)}
-              >
+              <div className="dropdown" onMouseLeave={() => setShowSamples(false)}>
                 {SAMPLES.map((s) => (
                   <button
                     key={s.id}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/60 border-b border-gray-100 dark:border-gray-700/40 last:border-0 transition-colors"
+                    className="dropdown-item"
                     onClick={() => { setToken(s.token); setShowSamples(false); }}
                   >
                     <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded",
-                        s.category === "vulnerability" && "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
-                        s.category === "jwe" && "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
-                        s.category === "clean" && "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
-                        s.category === "edge" && "bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-400",
-                      )}>{s.category}</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{s.label}</span>
+                      <span className={cn("tag", `tag-${s.category}`)}>{s.category}</span>
+                      <span style={{ fontSize: "0.875rem", fontWeight: 500 }}>{s.label}</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{s.description}</p>
+                    <p className="line-clamp-1" style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.125rem" }}>
+                      {s.description}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -146,7 +136,7 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
           )}
         </div>
 
-        <p className="text-xs text-gray-400 mt-3 flex items-center gap-1">
+        <p className="flex items-center gap-1 mt-3" style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
           <Upload size={12} />
           Drag & drop a token file anywhere on this panel
         </p>

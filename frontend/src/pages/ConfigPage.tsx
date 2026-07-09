@@ -3,9 +3,8 @@ import { Settings, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { getConfigSchema, validateConfig } from "../api/client";
 import { useApi } from "../hooks/useApi";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { ErrorBoundary } from "../utils/errors";
 import { Spinner } from "../components/ui/Spinner";
+import { ErrorBoundary } from "../utils/errors";
 
 const SAMPLE_CONFIG = `[claims]
 required = ["sub", "exp", "iat", "iss", "aud"]
@@ -27,7 +26,7 @@ message = "Role must be admin, user, or moderator"`;
 const SCHEMA_FIELDS = [
   { key: "[claims]", desc: "required: Array of required claim keys", code: true },
   { key: "[checks]", desc: "disable: Array of check names to skip", code: true },
-  { key: "[severity_overrides]", desc: "Override severity per check (e.g. missing_exp = \"critical\")", code: false },
+  { key: "[severity_overrides]", desc: 'Override severity per check (e.g. missing_exp = "critical")', code: false },
   { key: "[[custom_rules]]", desc: "Rules with: name, claim, pattern, severity, message", code: true },
 ];
 
@@ -45,24 +44,25 @@ export default function ConfigPage() {
 
   return (
     <ErrorBoundary>
-      <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
-        <div className="text-center">
-          <Settings size={28} className="mx-auto mb-3 text-blue-600 dark:text-blue-400" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configuration</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <div className="animate-fade-in" style={{ maxWidth: "64rem", margin: "0 auto" }}>
+        <div className="text-center" style={{ marginBottom: "1.5rem" }}>
+          <Settings size={28} style={{ margin: "0 auto 0.75rem", color: "var(--accent)" }} />
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Configuration</h1>
+          <p style={{ marginTop: "0.25rem", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
             Customize claim requirements, severity levels, and validation rules.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem" }}>
+          <div className="lg:col-span-2" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <label style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-secondary)" }}>
               TOML Configuration
             </label>
             <textarea
               value={config}
               onChange={(e) => { setConfig(e.target.value); resetValidation(); }}
-              className="w-full h-80 p-4 font-mono text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-shadow"
+              className="input"
+              style={{ minHeight: "20rem", fontFamily: "monospace" }}
               spellCheck={false}
             />
             <div className="flex gap-3">
@@ -72,62 +72,56 @@ export default function ConfigPage() {
               <Button variant="secondary" onClick={() => setConfig(SAMPLE_CONFIG)}>
                 Reset Sample
               </Button>
+              <Button variant="ghost" onClick={handleShowSchema}>
+                {showSchema ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showSchema ? "Hide Schema" : "Schema"}
+              </Button>
             </div>
 
             {validating && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2" style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
                 <Spinner size="sm" /> Validating...
               </div>
             )}
 
             {validation && (
-              <Card
-                className={validation.valid
-                  ? "border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-950/60"
-                  : "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/60"
-                }
-                padding="md"
-              >
+              <div className="card" style={{
+                padding: "1rem",
+                background: validation.valid ? "var(--success-soft)" : "var(--danger-soft)",
+                outline: validation.valid ? "1px solid var(--success)" : "1px solid var(--danger)"
+              }}>
                 <div className="flex items-start gap-3">
                   {validation.valid
-                    ? <CheckCircle size={18} className="text-green-600 mt-0.5 shrink-0" />
-                    : <AlertCircle size={18} className="text-red-600 mt-0.5 shrink-0" />
+                    ? <CheckCircle size={18} style={{ color: "var(--success)", flexShrink: 0, marginTop: "0.125rem" }} />
+                    : <AlertCircle size={18} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "0.125rem" }} />
                   }
                   <div>
-                    <p className={validation.valid ? "text-green-700 dark:text-green-300 font-medium" : "text-red-700 dark:text-red-300 font-medium"}>
+                    <p style={{ fontWeight: 600, color: validation.valid ? "var(--success)" : "var(--danger)" }}>
                       {validation.valid ? "Valid configuration" : "Invalid configuration"}
                     </p>
                     {validation.error && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validation.error}</p>
+                      <p style={{ marginTop: "0.25rem", fontSize: "0.875rem", color: "var(--danger)" }}>{validation.error}</p>
                     )}
                   </div>
                 </div>
-              </Card>
+              </div>
             )}
           </div>
 
-          <div className="space-y-4">
-            <Button variant="secondary" onClick={handleShowSchema} className="w-full">
-              {showSchema ? <EyeOff size={16} /> : <Eye size={16} />}
-              {showSchema ? "Hide Schema" : "Show Schema"}
-            </Button>
-
-            {schemaLoading && <Spinner className="mx-auto" size="sm" />}
-
-            {showSchema && (
-              <Card padding="md" className="bg-gray-50 dark:bg-gray-900/50 text-sm animate-slide-down">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Schema Reference</h3>
-                <div className="space-y-3">
-                  {SCHEMA_FIELDS.map((field) => (
-                    <div key={field.key}>
-                      <code className="text-blue-600 dark:text-blue-400 font-mono text-xs">{field.key}</code>
-                      <p className="text-xs text-gray-500 mt-0.5">{field.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
+          {showSchema && (
+            <div className="card animate-slide-down" style={{ padding: "1rem", background: "var(--bg)" }}>
+              <h3 style={{ fontWeight: 600, marginBottom: "0.75rem" }}>Schema Reference</h3>
+              {schemaLoading && <Spinner size="sm" />}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {SCHEMA_FIELDS.map((field) => (
+                  <div key={field.key}>
+                    <code style={{ color: "var(--accent)", fontFamily: "monospace", fontSize: "0.75rem" }}>{field.key}</code>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.125rem" }}>{field.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ErrorBoundary>

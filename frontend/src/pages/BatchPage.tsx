@@ -5,7 +5,6 @@ import { useApi } from "../hooks/useApi";
 import type { BatchResponse } from "../types";
 import type { SeverityLevel } from "../types";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Spinner } from "../components/ui/Spinner";
 import { ErrorBoundary } from "../utils/errors";
@@ -37,22 +36,18 @@ export default function BatchPage() {
 
   return (
     <ErrorBoundary>
-      <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-        <div className="text-center">
-          <Upload size={28} className="mx-auto mb-3 text-blue-600 dark:text-blue-400" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Batch Analysis</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
+        <div className="text-center" style={{ marginBottom: "1.5rem" }}>
+          <Upload size={28} style={{ margin: "0 auto 0.75rem", color: "var(--accent)" }} />
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Batch Analysis</h1>
+          <p style={{ marginTop: "0.25rem", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
             Upload a text file with one token per line, or a JSON array of tokens.
           </p>
         </div>
 
         <div
-          className={cn(
-            "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer",
-            isDragging
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60 scale-[1.01]"
-              : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500",
-          )}
+          className={cn("dropzone", isDragging && "dropzone-active")}
+          style={{ textAlign: "center", padding: "2rem", cursor: "pointer" }}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
@@ -62,25 +57,30 @@ export default function BatchPage() {
             ref={inputRef}
             type="file"
             accept=".txt,.json"
-            className="hidden"
+            className="sr-only"
             onChange={(e) => e.target.files?.[0] && onFileSelected(e.target.files[0])}
           />
           {file ? (
             <div className="flex items-center justify-center gap-2">
-              <FileText size={20} className="text-blue-600 dark:text-blue-400" />
-              <span className="font-medium text-gray-700 dark:text-gray-300">{file.name}</span>
-              <span className="text-sm text-gray-400">({(file.size / 1024).toFixed(1)} KB)</span>
+              <FileText size={20} style={{ color: "var(--accent)" }} />
+              <span style={{ fontWeight: 500 }}>{file.name}</span>
+              <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>({(file.size / 1024).toFixed(1)} KB)</span>
             </div>
           ) : (
             <>
-              <Upload size={36} className="mx-auto mb-3 text-gray-400" />
-              <p className="text-gray-500 dark:text-gray-400">Drop a file here or click to browse</p>
-              <p className="text-xs text-gray-400 mt-1">.txt (one per line) or .json</p>
+              <Upload size={36} style={{ margin: "0 auto 0.75rem", color: "var(--text-muted)" }} />
+              <p style={{ color: "var(--text-secondary)" }}>Drop a file here or click to browse</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>.txt (one per line) or .json</p>
             </>
           )}
         </div>
 
-        <Button onClick={handleRun} disabled={!file} loading={loading} className="w-full">
+        <Button
+          onClick={handleRun}
+          disabled={!file}
+          loading={loading}
+          style={{ width: "100%", marginTop: "1rem" }}
+        >
           {loading ? "Analyzing..." : `Analyze ${file ? file.name : "file"}`}
         </Button>
 
@@ -91,31 +91,31 @@ export default function BatchPage() {
         )}
 
         {error && (
-          <Card className="border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/60">
+          <div className="card" style={{ marginTop: "1.5rem", padding: "1rem", background: "var(--danger-soft)", outline: "1px solid var(--danger)" }}>
             <div className="flex items-start gap-3">
-              <AlertCircle size={18} className="text-red-500 mt-0.5 shrink-0" />
-              <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+              <AlertCircle size={18} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "0.125rem" }} />
+              <span style={{ fontSize: "0.875rem", color: "var(--danger)" }}>{error}</span>
             </div>
-          </Card>
+          </div>
         )}
 
         {result && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="animate-fade-in" style={{ marginTop: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
               {[
                 { label: "Total", value: result.total_tokens },
                 { label: "Processed", value: result.processed_tokens },
                 { label: "Failed", value: result.failed },
                 { label: "Findings", value: result.total_findings },
               ].map((stat) => (
-                <Card key={stat.label} className="text-center bg-gray-50 dark:bg-gray-900/50" padding="md">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</div>
-                  <div className="text-xs text-gray-500 mt-1">{stat.label}</div>
-                </Card>
+                <div key={stat.label} className="card stat" style={{ background: "var(--bg)" }}>
+                  <div className="stat-value">{stat.value}</div>
+                  <div className="stat-label">{stat.label}</div>
+                </div>
               ))}
             </div>
 
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap" style={{ marginTop: "1rem" }}>
               {severityOrder.map((s) => {
                 const count = result.severity_summary[s] || 0;
                 if (count === 0) return null;
@@ -124,33 +124,22 @@ export default function BatchPage() {
             </div>
 
             {result.results.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Results</h3>
-                {result.results.map((r) => (
-                  <Card key={r.index} padding="sm" hover>
-                    <div className="flex items-center justify-between">
-                      <code className="text-xs font-mono text-gray-500 dark:text-gray-400 truncate max-w-[70%]">
+              <div style={{ marginTop: "1rem" }}>
+                <h3 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Results</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+                  {result.results.map((r) => (
+                    <div key={r.index} className="batch-row">
+                      <code className="truncate" style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxWidth: "70%" }}>
                         {r.token_preview}
                       </code>
                       {r.error ? (
-                        <AlertCircle size={14} className="text-red-500 shrink-0" />
+                        <AlertCircle size={14} style={{ color: "var(--danger)", flexShrink: 0 }} />
                       ) : (
-                        <CheckCircle size={14} className="text-green-500 shrink-0" />
+                        <CheckCircle size={14} style={{ color: "var(--success)", flexShrink: 0 }} />
                       )}
                     </div>
-                    {r.error && (
-                      <p className="mt-1 text-xs text-red-500">{r.error}</p>
-                    )}
-                    {!r.error && (
-                      <p className="mt-1 text-xs text-gray-400">
-                        {r.findings.length === 0
-                          ? "No issues"
-                          : `${r.findings.length} finding${r.findings.length !== 1 ? "s" : ""}`
-                        }
-                      </p>
-                    )}
-                  </Card>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

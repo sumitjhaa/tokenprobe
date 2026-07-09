@@ -15,7 +15,7 @@ export const SAMPLES: SampleToken[] = [
   {
     id: "alg-none",
     label: "Algorithm: None",
-    description: "Token with alg=none — a critical vulnerability where the signature is bypassed",
+    description: "Token with alg=none — signature verification is bypassed entirely",
     category: "vulnerability",
     token:
       "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0."
@@ -24,7 +24,7 @@ export const SAMPLES: SampleToken[] = [
   {
     id: "empty-signature",
     label: "Empty Signature",
-    description: "alg=HS256 with an empty signature — server may accept it as valid",
+    description: "HS256 with an empty signature — server may accept as valid",
     category: "vulnerability",
     token:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
@@ -36,15 +36,12 @@ export const SAMPLES: SampleToken[] = [
     label: "Missing Expiration",
     description: "No exp claim — token never expires, a common misconfiguration",
     category: "vulnerability",
-    token:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
-      + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c",
+    token: HS256_TOKEN,
   },
   {
     id: "pii-leak",
     label: "PII in Payload",
-    description: "Token contains email, SSN, and credit card in plaintext payload",
+    description: "Contains email, SSN, and credit card in plaintext payload",
     category: "vulnerability",
     token:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
@@ -54,7 +51,7 @@ export const SAMPLES: SampleToken[] = [
   {
     id: "weak-secret",
     label: "Weak HMAC Secret",
-    description: "Signed with 'secret' — easily brute-forced weak key",
+    description: "Signed with 'secret' — easily brute-forced in seconds",
     category: "vulnerability",
     token:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
@@ -62,74 +59,118 @@ export const SAMPLES: SampleToken[] = [
       + "qoV0W6m7gZ5c8bQ3nX2yF1tR4pS9dK7aH0jL5wE3iU8",
   },
   {
-    id: "alg-hs256-rs256-confusion",
+    id: "alg-confusion",
     label: "Algorithm Confusion",
-    description: "alg=HS256 but the public key is used as the HMAC secret — key confusion attack",
+    description: "HS256 with RSA public key as secret — key confusion attack vector",
     category: "vulnerability",
     token:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6InVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNTE2MjM5MDIyfQ."
       + "sK9xH6nM3vQ2wR5tY8bE1dA4cG7fJ0iL3oP6mS9uV2",
   },
   {
-    id: "clean-token",
-    label: "Well-Configured Token",
-    description: "Properly configured JWT with all recommended claims (sub, exp, iat, iss)",
-    category: "clean",
-    token:
-      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9."
-      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaXNzIjoidG9rZW5wcm9iZS5pbyIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoyNTMxNDExMjMyLCJhdWQiOiJhcGkudG9rZW5wcm9iZS5pbyJ9."
-      + "dGhpcyBpcyBhIHNhbXBsZSBS UzI1NiBzaWduYXR1cmUu",
-  },
-  {
-    id: "jwe-rsa",
-    label: "JWE (RSA-OAEP + A256GCM)",
-    description: "A real JWE token using RSA-OAEP key encryption with 256-bit AES-GCM content encryption",
-    category: "jwe",
-    token:
-      "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIn0."
-      + "Vk9LLUFuLWVuY3J5cHRlZC1rZXkudGhhdC1pcy1iYXNlNjR1cmwtZW5jb2RlZC4."
-      + "cGF5bG9hZC1pdi5iYXNlNjR1cmwuZW5jb2RlZC4"
-      + "cGF5bG9hZC1jaXBoZXJ0ZXh0LmJhc2U2NHVybC5lbmNvZGVkLg"
-      + "YXV0aGVudGljYXRpb24tdGFn",
-  },
-  {
-    id: "jwe-aes",
-    label: "JWE (A128KW + A128GCM)",
-    description: "JWE with AES-128 key wrap and 128-bit AES-GCM — weaker encryption",
-    category: "jwe",
-    token:
-      "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4R0NNIn0."
-      + "ZW5jcnlwdGVkLWtleS5ieXRlcy4."
-      + "aXYtYml0cy5iYXNlNjR1cmwu"
-      + "Y2lwaGVydGV4dC5ieXRlcy4"
-      + "YXV0aC10YWcuYml0cw",
-  },
-  {
-    id: "sql-injection",
+    id: "sqli",
     label: "SQL Injection in Claim",
-    description: "Token payload contains SQL injection attempt in a claim value",
+    description: "Payload contains SQL injection in the sub claim",
     category: "vulnerability",
     token:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlciI6ImFkbWluJyBPUiAnMSc9JzEiLCJpYXQiOjE1MTYyMzkwMjJ9."
-      + "x3yZ5a7b9c1d2e4f6g8h0j2k4l6m8n0p2q4r6s8t0u2v4",
+      + "eyJzdWIiOiIxJyBPUiAxPTE7IC0tIiwibmFtZSI6IkFkbWluIiwicm9sZSI6InVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9."
+      + "L4xK9wRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c",
+  },
+  {
+    id: "xss",
+    label: "XSS in Payload",
+    description: "Token contains JavaScript injection in a claim value",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IjxzY3JpcHQ+YWxlcnQoMSk8L3NjcmlwdD4iLCJpYXQiOjE1MTYyMzkwMjJ9."
+      + "aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT1uV2wX3yZ4",
+  },
+  {
+    id: "no-aud",
+    label: "Missing Audience",
+    description: "No aud claim — token may be reused across different services",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTl9."
+      + "dGhpcyBpcyBhIHRlc3Qgc2lnbmF0dXJlIGZvciBkZW1v",
   },
   {
     id: "oversized",
     label: "Oversized Payload",
-    description: "Token with an unusually large payload (10K+ chars) — tests size validation",
+    description: "Extremely large token payload with nested data",
     category: "edge",
     token:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-      + "e30."
-      + "x".repeat(5000),
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6InVzZXIiLCJpYXQiOjE1MTYyMzkwMjIsImRhdGEiOnsibGV2ZW"
+      + "wiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsicmVhZCIsIndyaXRlIiwiZGVsZXRlIl0sIm1ldGFkYXRhIjp7ImNyZWF0ZWRfYXQiOiIyMDI0LTAxL"
+      + "TAxIiwidXBkYXRlZF9hdCI6IjIwMjQtMDYtMTUifX19."
+      + HS256_TOKEN.split(".")[2],
   },
   {
     id: "invalid-utf8",
-    label: "Invalid UTF-8",
-    description: "Token with malformed base64 — tests decoding error handling",
+    label: "Invalid UTF-8 Payload",
+    description: "Base64 payload decodes to invalid UTF-8 sequences",
     category: "edge",
-    token: "not-a-valid-token.at.all.invalid!",
+    token:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "//7//v///v///v///v///v///v///v///v///v///v///v///v///v///v///v///v///v///v///v///v///v///v/"
+      + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c",
+  },
+  {
+    id: "no-iss",
+    label: "Missing Issuer",
+    description: "No iss claim — token origin cannot be verified",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTl9."
+      + "nK3xR4tU7vW8yZ1aB2cD5eF6gH7iJ8kL9mN0oP1qR2s",
+  },
+  {
+    id: "jwe-rsa",
+    label: "JWE RSA-OAEP",
+    description: "JWE encrypted with RSA-OAEP and A256GCM — valid structure",
+    category: "jwe",
+    token:
+      "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ."
+      + "OKOawDo13gRp2ojaHV7LFpZcgV7T6DVZKTyKOMTYUmKoTCVJRgckCL9kiMT03JGeipsEdY3mx_etLbbWSrFr05kLzcSr4qKAq7YN7e9jwQRb23nfa6c"
+      + "9d-Jn3u5gf0rE530W4IPAG3kQnT6d8nF4e0iE5vS8hYs3U1aGx5S0aKj8."
+      + "48V1_ALb6US04U3b.5"
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+      + "f4F6hG7iJ8kL9mN0oP1qR2sT3uV4wX5yZ6",
+  },
+  {
+    id: "jwe-aes",
+    label: "JWE A128KW",
+    description: "JWE encrypted with AES key wrap and A128GCM",
+    category: "jwe",
+    token:
+      "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4R0NNIn0."
+      + "6KB707dM9YTIg8t5U6x9V8WQJG0Vg0x6."
+      + "Qx0Uv1yW2zA3b4C5d6E7f8G9h0I1j2."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6InVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9."
+      + "aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT1uV2wX3yZ4",
+  },
+  {
+    id: "clean-token",
+    label: "Well-Configured Token",
+    description: "All recommended claims present: sub, exp, iat, iss, aud",
+    category: "clean",
+    token: HS256_TOKEN,
+  },
+  {
+    id: "clean-rs256",
+    label: "RS256 with All Claims",
+    description: "Properly configured RS256 token with complete claim set",
+    category: "clean",
+    token:
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE3MTYyMzkwMjIsImlzcyI6Imh0dHBzO"
+      + "i8vYXV0aC5leGFtcGxlLmNvbSIsImF1ZCI6Imh0dHBzOi8vYXBpLmV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIifQ."
+      + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c",
   },
 ];

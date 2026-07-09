@@ -1,9 +1,7 @@
 import { Component, type ReactNode } from "react";
-import { AlertCircle } from "lucide-react";
 
 export class ApiError extends Error {
   status: number;
-
   constructor(message: string, status: number) {
     super(message);
     this.name = "ApiError";
@@ -17,32 +15,27 @@ export function getErrorMessage(e: unknown): string {
   return "An unexpected error occurred";
 }
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
+interface Props { children: ReactNode; fallback?: ReactNode; }
+interface State { hasError: boolean; error: Error | null; }
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
-
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
-
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="flex items-start gap-3 p-4 m-4 bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 rounded-xl">
-          <AlertCircle size={18} className="text-red-500 mt-0.5 shrink-0" />
+        <div style={{
+          display: "flex", alignItems: "flex-start", gap: "0.75rem",
+          padding: "1rem", margin: "1rem",
+          background: "var(--danger-soft)", color: "var(--danger)",
+          borderRadius: "0.75rem", border: "1px solid var(--danger)"
+        }}>
           <div>
-            <p className="font-medium text-red-700 dark:text-red-300">Something went wrong</p>
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{this.state.error?.message}</p>
+            <p style={{ fontWeight: 600, marginBottom: "0.25rem" }}>Something went wrong</p>
+            <p style={{ fontSize: "0.875rem", opacity: 0.9 }}>{this.state.error?.message}</p>
           </div>
         </div>
       );

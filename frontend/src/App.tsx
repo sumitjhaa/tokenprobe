@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect, type FC } from "react";
+import { lazy, Suspense, useEffect, useState, type FC } from "react";
 import Navbar from "./components/Navbar";
+import ThemeModal from "./components/ThemeModal";
 import { useTheme } from "./hooks/useTheme";
 import { useHash } from "./hooks/useHash";
 import { ErrorBoundary } from "./utils/errors";
@@ -20,15 +21,16 @@ const pages: Record<string, FC> = {
 
 function PageFallback() {
   return (
-    <div className="flex justify-center py-20">
+    <div style={{ display: "flex", justifyContent: "center", padding: "5rem 0" }}>
       <Spinner size="lg" />
     </div>
   );
 }
 
 export default function App() {
-  const { dark, toggle } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { hash, navigate } = useHash();
+  const [showTheme, setShowTheme] = useState(false);
   const Page = pages[hash] || HomePage;
 
   useEffect(() => {
@@ -40,17 +42,24 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
-        <Navbar dark={dark} onToggleDark={toggle} currentPath={hash} onNavigate={navigate} />
-        <main className="max-w-6xl mx-auto px-4 py-12">
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        <Navbar currentPath={hash} onNavigate={navigate} onOpenTheme={() => setShowTheme(true)} />
+        <main className="container" style={{ paddingTop: "3rem", paddingBottom: "3rem", flex: 1 }}>
           <Suspense fallback={<PageFallback />}>
             <Page />
           </Suspense>
-          <footer className="mt-16 text-center text-xs text-gray-400 dark:text-gray-600">
-            TokenProbe v1.0.0 &mdash; No tokens are stored or transmitted
-          </footer>
         </main>
+        <footer className="footer">
+          TokenProbe v1.0.0 &mdash; No tokens are stored or transmitted
+        </footer>
       </div>
+      {showTheme && (
+        <ThemeModal
+          current={theme}
+          onSelect={setTheme}
+          onClose={() => setShowTheme(false)}
+        />
+      )}
     </ErrorBoundary>
   );
 }
