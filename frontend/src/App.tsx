@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type FC } from "react";
 import Navbar from "./components/Navbar";
 import ThemeModal from "./components/ThemeModal";
+import ScrollToTop from "./components/ScrollToTop";
 import { useTheme } from "./hooks/useTheme";
 import { useHash } from "./hooks/useHash";
 import { ErrorBoundary } from "./utils/errors";
@@ -10,12 +11,14 @@ import { healthCheck } from "./api/client";
 const HomePage = lazy(() => import("./pages/HomePage"));
 const BatchPage = lazy(() => import("./pages/BatchPage"));
 const ConfigPage = lazy(() => import("./pages/ConfigPage"));
+const DocsPage = lazy(() => import("./pages/DocsPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 
 const pages: Record<string, FC> = {
   home: HomePage,
   batch: BatchPage,
   config: ConfigPage,
+  docs: DocsPage,
   about: AboutPage,
 };
 
@@ -59,6 +62,7 @@ export default function App() {
           </div>
         </footer>
       </div>
+      <ScrollToTop />
       {showTheme && (
         <ThemeModal
           current={theme}

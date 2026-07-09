@@ -1,23 +1,36 @@
 import { useState, useRef, type DragEvent, type ChangeEvent } from "react";
-import { Upload, Clipboard, FileCode, X, AlertCircle, ChevronDown } from "lucide-react";
 import { Button } from "./ui/Button";
 import { cn } from "../utils/cn";
 import { SAMPLES } from "../samples/tokens";
+import type { RecentToken } from "../hooks/useRecentTokens";
+import TokenDecoder from "./TokenDecoder";
+import NfIcon from "./NfIcon";
 
 const MAX_FILE_SIZE = 1 * 1024 * 1024;
 
 interface Props {
   onAnalyze: (token: string) => void;
   loading: boolean;
+  recent?: RecentToken[];
+  onClearRecent?: () => void;
 }
 
-export default function TokenInput({ onAnalyze, loading }: Props) {
+export default function TokenInput({ onAnalyze, loading, recent, onClearRecent }: Props) {
   const [token, setToken] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [showSamples, setShowSamples] = useState(false);
+  const [showRecent, setShowRecent] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      const trimmed = token.trim();
+      if (trimmed) onAnalyze(trimmed);
+    }
+  };
 
   const readFileAsText = (file: File) => {
     setFileError(null);
@@ -65,19 +78,22 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
-        <textarea
-          ref={textareaRef}
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="Paste your JWT or JWE token here..."
-          className="input"
-          style={{ minHeight: "10rem" }}
-          spellCheck={false}
-        />
+          <textarea
+            ref={textareaRef}
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Paste your JWT or JWE token here..."
+            className="input"
+            style={{ minHeight: "10rem" }}
+            spellCheck={false}
+          />
+
+        <TokenDecoder token={token} />
 
         {fileError && (
           <div className="flex items-center gap-2 mt-3" style={{ color: "var(--danger)", fontSize: "0.875rem" }}>
-            <AlertCircle size={14} />
+            <NfIcon name="alert" size="0.875em" />
             {fileError}
           </div>
         )}
@@ -95,18 +111,18 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
             Analyze
           </Button>
           <Button variant="secondary" onClick={handlePasteFromClipboard}>
-            <Clipboard size={14} />
+            <NfIcon name="clipboard" size="0.875em" />
             Paste
           </Button>
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
-            <Upload size={14} />
+            <NfIcon name="upload" size="0.875em" />
             Open File
           </Button>
           <div style={{ position: "relative", zIndex: 1 }}>
             <Button variant="secondary" onClick={() => setShowSamples(!showSamples)}>
-              <FileCode size={14} />
+              <NfIcon name="file" size="0.875em" />
               Samples
-              <ChevronDown size={12} />
+              <NfIcon name="chevronDown" size="0.75em" />
             </Button>
             {showSamples && (
               <div className="dropdown" onMouseLeave={() => setShowSamples(false)}>
@@ -128,18 +144,61 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
               </div>
             )}
           </div>
+          {recent && recent.length > 0 && (
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <Button variant="secondary" onClick={() => setShowRecent(!showRecent)}>
+                <NfIcon name="history" size="0.875em" />
+                Recent
+                <NfIcon name="chevronDown" size="0.75em" />
+              </Button>
+              {showRecent && (
+                <div className="dropdown" onMouseLeave={() => setShowRecent(false)}>
+                  {recent.map((r) => (
+                    <button
+                      key={r.id}
+                      className="dropdown-item"
+                      onClick={() => { setToken(r.token); setShowRecent(false); }}
+                    >
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 500, fontFamily: "monospace" }}>
+                        {r.preview}
+                      </span>
+                      <span style={{ fontSize: "0.625rem", color: "var(--text-muted)", display: "block", marginTop: "0.125rem" }}>
+                        {new Date(r.timestamp).toLocaleString()}
+                      </span>
+                    </button>
+                  ))}
+                  {onClearRecent && (
+                    <button
+                      className="dropdown-item"
+                      onClick={() => { onClearRecent(); setShowRecent(false); }}
+                      style={{ color: "var(--text-muted)", fontStyle: "italic" }}
+                    >
+                      Clear history
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {hasToken && (
             <Button variant="ghost" onClick={() => setToken("")}>
-              <X size={14} />
+              <NfIcon name="times" size="0.875em" />
               Clear
             </Button>
           )}
         </div>
 
-        <p className="flex items-center gap-1 mt-3" style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-          <Upload size={12} />
-          Drag & drop a token file anywhere on this panel
-        </p>
+          <div className="flex items-center justify-between mt-3" style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+            <span className="flex items-center gap-1">
+              <NfIcon name="upload" size="0.75em" />
+              Drag & drop a token file anywhere on this panel
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd style={{ background: "var(--bg-alt)", padding: "0.1rem 0.35rem", fontSize: "0.625rem", fontFamily: "monospace" }}>Ctrl+Enter</kbd>
+              to analyze
+            </span>
+          </div>
       </div>
     </div>
   );

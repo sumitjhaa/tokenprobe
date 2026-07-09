@@ -1,3 +1,43 @@
+@font-face {
+  font-family: "Raveo";
+  src: url("/fonts/RaveoVF.ttf") format("truetype");
+  font-weight: 100 900;
+  font-stretch: 75% 125%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CaskaydiaMono NFM";
+  src: url("/fonts/CaskaydiaMonoNerdFontMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CaskaydiaMono NFM";
+  src: url("/fonts/CaskaydiaMonoNerdFontMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CaskaydiaMono NFM";
+  src: url("/fonts/CaskaydiaMonoNerdFontMono-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CaskaydiaMono NFM";
+  src: url("/fonts/CaskaydiaMonoNerdFontMono-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -5,7 +45,7 @@
 }
 
 html {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: "Raveo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -35,7 +75,7 @@ a:hover {
 }
 
 code, pre, .font-mono {
-  font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+  font-family: "CaskaydiaMono NFM", "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
 }
 
 img, svg {
@@ -192,6 +232,14 @@ input, textarea, select {
 
 .animate-pulse {
   animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+.animate-progress {
+  animation: progress 1.5s ease-in-out infinite;
 }
 
 /* ─── Scrollbar ─── */

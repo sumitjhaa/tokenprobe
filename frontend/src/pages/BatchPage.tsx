@@ -1,15 +1,14 @@
-import { useState, useRef, type DragEvent } from "react";
-import { Upload, FileText, AlertCircle, CheckCircle } from "lucide-react";
+import { useState, useRef, useCallback, type DragEvent } from "react";
 import { analyzeBatch } from "../api/client";
 import { useApi } from "../hooks/useApi";
 import type { BatchResponse } from "../types";
 import type { SeverityLevel } from "../types";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
-import { Spinner } from "../components/ui/Spinner";
 import { ErrorBoundary } from "../utils/errors";
 import { cn } from "../utils/cn";
 import { severityOrder } from "../utils/severity";
+import NfIcon from "../components/NfIcon";
 
 export default function BatchPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -26,14 +25,45 @@ export default function BatchPage() {
     if (f) onFileSelected(f);
   };
 
+  const [copied, setCopied] = useState(false);
+
+  const copyBatchResults = useCallback(() => {
+    if (!result) return;
+    const text = [
+      `TokenProbe Batch Analysis`,
+      `Total: ${result.total_tokens} | Processed: ${result.processed_tokens} | Failed: ${result.failed} | Findings: ${result.total_findings}`,
+      "",
+      ...result.results.map((r) =>
+        r.error
+          ? `[FAIL] ${r.token_preview}: ${r.error}`
+          : `[OK]   ${r.token_preview}: ${r.findings.length} finding(s)`
+      ),
+    ].join("\n");
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [result]);
+
+  const downloadBatchResults = useCallback(() => {
+    if (!result) return;
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tokenprobe-batch-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [result]);
+
   return (
     <ErrorBoundary>
       <div className="animate-fade-in">
         <div className="flex items-center gap-2" style={{ marginBottom: "1.5rem" }}>
-          <Upload size={28} style={{ color: "var(--accent)" }} />
+          <NfIcon name="upload" size="1.75rem" style={{ color: "var(--accent)" }} />
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Batch Analysis</h1>
         </div>
 
+        <div style={{ width: "min(64rem, 100%)", padding: "0 1rem", margin: "0 auto" }}>
         <div
           className={cn("dropzone", isDragging && "dropzone-active")}
           style={{ textAlign: "center", padding: "2.5rem", cursor: "pointer" }}
@@ -51,14 +81,14 @@ export default function BatchPage() {
           />
           {file ? (
             <div className="flex items-center justify-center gap-2">
-              <FileText size={22} style={{ color: "var(--accent)" }} />
+              <NfIcon name="fileText" size="1.375em" style={{ color: "var(--accent)" }} />
               <span style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{file.name}</span>
               <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>({(file.size / 1024).toFixed(1)} KB)</span>
             </div>
           ) : (
             <>
-              <Upload size={40} style={{ margin: "0 auto 0.75rem", color: "var(--text-muted)" }} />
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem" }}>Drop file or click to browse</p>
+              <NfIcon name="upload" size="2.5em" style={{ color: "var(--text-muted)" }} />
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", marginTop: "0.75rem" }}>Drop file or click to browse</p>
             </>
           )}
         </div>
@@ -74,12 +104,21 @@ export default function BatchPage() {
           </Button>
         )}
 
-        {loading && <div className="flex justify-center py-8"><Spinner size="lg" /></div>}
+        {loading && (
+          <div className="animate-fade-in" style={{ marginTop: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+              <div style={{ flex: 1, height: "0.5rem", background: "var(--bg-alt)", overflow: "hidden" }}>
+                <div className="animate-progress" style={{ height: "100%", width: "30%", background: "var(--accent)" }} />
+              </div>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", flexShrink: 0 }}>Analyzing...</span>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div style={{ marginTop: "1.25rem", padding: "1rem", background: "var(--danger-soft)", color: "var(--danger)", fontSize: "0.9375rem" }}>
             <div className="flex items-center gap-2">
-              <AlertCircle size={18} />
+              <NfIcon name="alert" size="1.125em" />
               <span>{error}</span>
             </div>
           </div>
@@ -87,6 +126,19 @@ export default function BatchPage() {
 
         {result && (
           <div className="animate-fade-in" style={{ marginTop: "1.5rem" }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: "0.75rem" }}>
+              <h2 style={{ fontSize: "0.9375rem", fontWeight: 700 }}>Results</h2>
+              <div className="flex items-center gap-1">
+                <button onClick={copyBatchResults} className="btn btn-ghost btn-sm" title="Copy summary">
+                  <NfIcon name={copied ? "check" : "copy"} size="0.875em" />
+                  {copied ? "Copied" : "Copy"}
+                </button>
+                <button onClick={downloadBatchResults} className="btn btn-ghost btn-sm" title="Download JSON">
+                  <NfIcon name="download" size="0.875em" />
+                  JSON
+                </button>
+              </div>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.75rem" }}>
               {[
                 { label: "Total", value: result.total_tokens },
@@ -118,9 +170,9 @@ export default function BatchPage() {
                         {r.token_preview}
                       </code>
                       {r.error ? (
-                        <AlertCircle size={16} style={{ color: "var(--danger)", flexShrink: 0 }} />
+                        <NfIcon name="alert" size="1em" style={{ color: "var(--danger)", flexShrink: 0 }} />
                       ) : (
-                        <CheckCircle size={16} style={{ color: "var(--success)", flexShrink: 0 }} />
+                        <NfIcon name="checkCircle" size="1em" style={{ color: "var(--success)", flexShrink: 0 }} />
                       )}
                     </div>
                   ))}
@@ -129,6 +181,7 @@ export default function BatchPage() {
             )}
           </div>
         )}
+      </div>
       </div>
     </ErrorBoundary>
   );

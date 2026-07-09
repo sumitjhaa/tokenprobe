@@ -59,6 +59,10 @@ export const THEMES: { family: "catppuccin" | "cyberpunk"; label: string; varian
       { id: "hack", label: "Hack", bg: "#f0fdf4", accent: "#00b341", text: "#052e16" },
       { id: "neon-light", label: "Neon Light", bg: "#faf5ff", accent: "#d500f9", text: "#3b0764" },
       { id: "grid", label: "Grid", bg: "#f0f7ff", accent: "#0077cc", text: "#0c1b33" },
+      { id: "matrix", label: "Matrix", bg: "#000000", accent: "#00ff00", text: "#d0ffd0" },
+      { id: "cobalt", label: "Cobalt", bg: "#050a14", accent: "#0055ff", text: "#c8d8ff" },
+      { id: "heat", label: "Heat", bg: "#0f0300", accent: "#ff4500", text: "#ffe8d6" },
+      { id: "void", label: "Void", bg: "#050014", accent: "#b84dff", text: "#e8d5ff" },
     ],
   },
 ];
@@ -85,6 +89,7 @@ export function useTheme() {
         neon: "Cyberpunk Neon", dusk: "Cyberpunk Dusk", frost: "Cyberpunk Frost",
         amber: "Cyberpunk Amber", synthwave: "Cyberpunk Synthwave", blood: "Cyberpunk Blood",
         hack: "Cyberpunk Hack", "neon-light": "Cyberpunk Neon Light", grid: "Cyberpunk Grid",
+        matrix: "Cyberpunk Matrix", cobalt: "Cyberpunk Cobalt", heat: "Cyberpunk Heat", void: "Cyberpunk Void",
       },
     };
     setConfig({ family, variant, label: map[family]?.[variant] || `${family} ${variant}` });

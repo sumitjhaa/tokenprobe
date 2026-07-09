@@ -42,7 +42,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent-soft);
   color: var(--accent);
   flex-shrink: 0;
 }
@@ -68,6 +67,7 @@
 }
 .stat-item {
   text-align: center;
+  padding: 0.5rem;
 }
 .stat-number {
   display: block;
@@ -106,8 +106,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  font-weight: 500;
-  border: none;
+  font-weight: 600;
+  border: 1px solid transparent;
   transition: all 0.15s ease;
   cursor: pointer;
   user-select: none;
@@ -133,35 +133,54 @@
 .btn-primary {
   background: var(--accent);
   color: var(--text-inverse);
+  border-color: var(--accent-hover);
+  box-shadow: var(--shadow-sm);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
   background: var(--bg-alt);
   color: var(--text);
+  border-color: var(--border);
 }
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-surface);
+  border-color: var(--border-hover);
   color: var(--text);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
+  border-color: transparent;
 }
 .btn-ghost:hover:not(:disabled) {
   background: var(--accent-soft);
+  border-color: var(--accent-soft);
   color: var(--accent);
 }
 
 .btn-danger {
   background: var(--danger);
   color: #fff;
+  border-color: var(--danger);
 }
 .btn-danger:hover:not(:disabled) {
   opacity: 0.9;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="cyberpunk"] .btn-primary {
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+[data-theme="cyberpunk"] .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+[data-theme="cyberpunk"] .btn-ghost:hover:not(:disabled) {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 /* ─── Badge ─── */
@@ -177,20 +196,29 @@
   text-transform: uppercase;
 }
 
-.badge-critical { background: var(--danger-soft); color: var(--danger); }
-.badge-high { background: var(--warning-soft); color: var(--warning); }
-.badge-medium { background: var(--warning-soft); color: var(--warning); }
-.badge-low { background: var(--info-soft); color: var(--info); }
-.badge-info { background: var(--accent-soft); color: var(--accent); }
+.badge {
+  border: 1px solid transparent;
+}
+.badge-critical { background: var(--danger-soft); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 20%, transparent); }
+.badge-high { background: var(--warning-soft); color: var(--warning); border-color: color-mix(in srgb, var(--warning) 20%, transparent); }
+.badge-medium { background: var(--warning-soft); color: var(--warning); border-color: color-mix(in srgb, var(--warning) 20%, transparent); }
+.badge-low { background: var(--info-soft); color: var(--info); border-color: color-mix(in srgb, var(--info) 20%, transparent); }
+.badge-info { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+[data-theme="cyberpunk"] .badge {
+  text-shadow: 0 0 6px color-mix(in srgb, currentColor 25%, transparent);
+}
 
 /* ─── Card ─── */
 .card {
   background: var(--bg-alt);
+  border: 1px solid var(--border);
   transition: all 0.2s ease;
 }
 .card-hover:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
+  border-color: var(--border-hover);
 }
 
 /* ─── Tag (category pill) ─── */
@@ -223,9 +251,16 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   outline: none;
 }
+.input:hover {
+  border-color: var(--border-hover);
+}
 .input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+[data-theme="cyberpunk"] .input:focus {
+  box-shadow: 0 0 0 2px var(--accent-soft), 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 .input::placeholder {
   color: var(--text-muted);
@@ -234,7 +269,7 @@
 textarea.input {
   resize: vertical;
   min-height: 10rem;
-  font-family: "SF Mono", "Fira Code", "Roboto Mono", monospace;
+  font-family: "CaskaydiaMono NFM", "SF Mono", "Fira Code", "Roboto Mono", monospace;
   font-size: 0.875rem;
   line-height: 1.5;
 }
@@ -245,14 +280,20 @@ textarea.input {
   padding: 1.5rem;
   transition: all 0.2s ease;
   cursor: pointer;
+  background: var(--bg-alt);
 }
 .dropzone:hover {
   border-color: var(--border-hover);
+  background: var(--bg-surface);
 }
 .dropzone-active {
   border-color: var(--accent);
   background: var(--accent-soft);
   transform: scale(1.01);
+}
+
+[data-theme="cyberpunk"] .dropzone-active {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 /* ─── Modal ─── */
@@ -270,10 +311,16 @@ textarea.input {
 
 .modal-content {
   background: var(--bg-alt);
+  border: 1px solid var(--border-hover);
   padding: 1.5rem;
   max-height: 90vh;
   overflow-y: auto;
   animation: scale-in 0.2s ease-out;
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="cyberpunk"] .modal-content {
+  border-color: var(--accent);
 }
 
 /* ─── Theme Modal ─── */
@@ -282,7 +329,7 @@ textarea.input {
   gap: 0.5rem;
 }
 .theme-grid--catppuccin { grid-template-columns: repeat(4, 1fr); }
-.theme-grid--cyberpunk { grid-template-columns: repeat(3, 1fr); }
+.theme-grid--cyberpunk { grid-template-columns: repeat(4, 1fr); }
 
 .theme-card {
   display: flex;
@@ -309,7 +356,11 @@ textarea.input {
   transition: box-shadow 0.15s ease;
 }
 .theme-card.active .theme-palette {
-  box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--bg-alt);
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--bg-alt), 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+[data-theme="cyberpunk"] .theme-card.active .theme-palette {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--bg-alt), 0 0 20px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .theme-palette-accent {
@@ -348,12 +399,17 @@ textarea.input {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   height: 2.5rem;
   padding: 0 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="cyberpunk"] .navbar-inner {
+  border-color: var(--border-hover);
 }
 
 .navbar-brand {
@@ -424,6 +480,10 @@ textarea.input {
   background: var(--accent);
 }
 
+[data-theme="cyberpunk"] .nav-link.active::after {
+  box-shadow: 0 0 8px var(--accent);
+}
+
 .nav-slash {
   display: flex;
   align-items: center;
@@ -454,25 +514,33 @@ textarea.input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
 }
 .nav-theme-btn:hover {
   color: var(--accent);
+  background: var(--bg-alt);
+  border-color: var(--border-hover);
+}
+
+[data-theme="cyberpunk"] .nav-theme-btn:hover {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 /* ─── Stat card ─── */
 .stat {
   text-align: center;
   padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
 }
 .stat-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--accent);
   line-height: 1.2;
 }
 .stat-label {
@@ -488,23 +556,27 @@ textarea.input {
 .finding {
   padding: 0.625rem 0.75rem;
   background: var(--bg);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
   margin-bottom: 0.125rem;
   animation: fade-in 0.3s ease-out both;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
 }
 .finding:hover {
   background: var(--bg-alt);
+  border-color: var(--border-hover);
 }
-.finding-critical { border-left: 3px solid var(--danger); }
-.finding-high { border-left: 3px solid var(--warning); }
-.finding-medium { border-left: 3px solid var(--warning); }
-.finding-low { border-left: 3px solid var(--info); }
-.finding-info { border-left: 3px solid var(--accent); }
+.finding-critical { border-left-color: var(--danger); }
+.finding-high { border-left-color: var(--warning); }
+.finding-medium { border-left-color: var(--warning); }
+.finding-low { border-left-color: var(--info); }
+.finding-info { border-left-color: var(--accent); }
 
 /* ─── Summary card ─── */
 .summary-card {
   padding: 1rem;
   background: var(--bg);
+  border: 1px solid var(--border);
   margin-bottom: 1.25rem;
 }
 
@@ -520,11 +592,13 @@ textarea.input {
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
   background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 0.625rem;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 .batch-row:hover {
   background: var(--bg-alt);
+  border-color: var(--border-hover);
 }
 
 
@@ -538,12 +612,16 @@ textarea.input {
   z-index: 50;
   width: 20rem;
   background: var(--bg-alt);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-hover);
   box-shadow: var(--shadow-lg);
   max-height: 20rem;
   overflow-y: auto;
   z-index: 100;
   animation: scale-in 0.15s ease-out;
+}
+
+[data-theme="cyberpunk"] .dropdown {
+  border-color: var(--accent);
 }
 
 .dropdown-item {
@@ -563,6 +641,11 @@ textarea.input {
 }
 .dropdown-item:hover {
   background: var(--accent-soft);
+  color: var(--accent);
+}
+
+[data-theme="cyberpunk"] .dropdown-item:hover {
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 /* ─── Footer ─── */
@@ -573,6 +656,10 @@ textarea.input {
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   padding: 1rem;
+}
+
+[data-theme="cyberpunk"] .footer {
+  border-top-color: var(--border-hover);
 }
 
 /* ─── Responsive grid ─── */

@@ -1,8 +1,8 @@
 import { memo, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Finding } from "../types";
 import { severityLabel, severityIcon, severityClass } from "../utils/severity";
 import { cn } from "../utils/cn";
+import NfIcon from "./NfIcon";
 
 interface Props {
   finding: Finding;
@@ -11,13 +11,13 @@ interface Props {
 
 const FindingCard = memo(function FindingCard({ finding, index }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const Icon = severityIcon[finding.severity];
+  const icon = severityIcon[finding.severity];
   const cls = severityClass[finding.severity].split(" ")[0];
 
   return (
     <div className={cn("finding", cls)} style={{ animationDelay: `${index * 60}ms` }}>
       <div className="flex items-start gap-3">
-        <Icon size={16} style={{ color: "inherit", flexShrink: 0, marginTop: "0.125rem" }} />
+        <NfIcon name={icon} size="1em" style={{ flexShrink: 0, marginTop: "0.125rem" }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-2 flex-wrap">
             <span className={cn("badge", severityClass[finding.severity].split(" ").find((c) => c.startsWith("badge-")) || "badge-info")}>
@@ -35,7 +35,7 @@ const FindingCard = memo(function FindingCard({ finding, index }: Props) {
               className="btn btn-ghost btn-sm"
               style={{ marginTop: "0.5rem" }}
             >
-              {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              <NfIcon name={expanded ? "chevronUp" : "chevronDown"} size="0.75em" />
               {expanded ? "Hide remediation" : "View remediation"}
             </button>
           )}

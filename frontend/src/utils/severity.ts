@@ -1,4 +1,3 @@
-import { AlertTriangle, AlertCircle, Info, ShieldAlert, Shield } from "lucide-react";
 import type { SeverityLevel as SL } from "../types";
 
 export type SeverityLevel = SL;
@@ -11,12 +10,12 @@ export const severityLabel: Record<SeverityLevel, string> = {
   info: "INFO",
 };
 
-export const severityIcon: Record<SeverityLevel, typeof Shield> = {
-  critical: ShieldAlert,
-  high: AlertCircle,
-  medium: AlertTriangle,
-  low: Info,
-  info: Info,
+export const severityIcon: Record<SeverityLevel, string> = {
+  critical: "shield",
+  high: "alert",
+  medium: "alert",
+  low: "info",
+  info: "info",
 };
 
 export const severityClass: Record<SeverityLevel, string> = {

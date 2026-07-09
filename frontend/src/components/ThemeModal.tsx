@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { X, Check } from "lucide-react";
 import { THEMES } from "../hooks/useTheme";
 import type { ThemeConfig } from "../hooks/useTheme";
+import NfIcon from "./NfIcon";
 
 interface Props {
   current: ThemeConfig;
@@ -26,7 +26,7 @@ export default function ThemeModal({ current, onSelect, onClose }: Props) {
         <div className="flex items-center justify-between mb-4">
           <h2 style={{ fontWeight: 700, fontSize: "1.125rem" }}>Theme</h2>
           <button onClick={onClose} className="btn btn-ghost btn-sm" aria-label="Close">
-            <X size={16} />
+            <NfIcon name="times" size="1em" />
           </button>
         </div>
 
@@ -52,7 +52,7 @@ export default function ThemeModal({ current, onSelect, onClose }: Props) {
                       <span className="theme-palette-text" style={{ background: v.text }} />
                       {isActive && (
                         <span className="theme-palette-check">
-                          <Check size={14} strokeWidth={3} />
+                          <NfIcon name="check" size="0.875em" />
                         </span>
                       )}
                     </div>

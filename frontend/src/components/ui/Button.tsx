@@ -1,6 +1,6 @@
 import { type ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "../../utils/cn";
-import { Loader2 } from "lucide-react";
+import NfIcon from "../NfIcon";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
@@ -32,7 +32,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className={cn("btn", variantClass[variant], sizeClass[size], className)}
       {...props}
     >
-      {loading && <Loader2 size={size === "lg" ? 20 : size === "sm" ? 14 : 16} className="animate-spin" />}
+      {loading && <NfIcon name="spinner" size={size === "lg" ? "1.25em" : size === "sm" ? "0.875em" : "1em"} style={{ animation: "spin 1s linear infinite" }} />}
       {children}
     </button>
   ),
