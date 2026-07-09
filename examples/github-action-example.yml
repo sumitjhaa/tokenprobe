@@ -1,0 +1,103 @@
+# Example GitHub Actions workflow using TokenProbe
+# Copy this file to .github/workflows/jwt-audit.yml in your project
+
+name: JWT Security Audit
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  audit-jwt:
+    runs-on: ubuntu-latest
+    name: Audit JWT Tokens
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Example 1: Audit a single token from secrets
+      - name: Audit production JWT
+        uses: sumitjhaa/tokenprobe@main
+        with:
+          token: ${{ secrets.PRODUCTION_JWT_TOKEN }}
+          output-format: json
+          output-file: production-audit.json
+          fail-on: high
+
+      # Example 2: Audit tokens from a file
+      - name: Audit test tokens
+        uses: sumitjhaa/tokenprobe@main
+        with:
+          token-file: tests/fixtures/tokens.txt
+          output-format: json
+          output-file: test-audit.json
+          fail-on: medium
+
+      # Example 3: Audit with custom configuration
+      - name: Audit with custom config
+        uses: sumitjhaa/tokenprobe@main
+        with:
+          token: ${{ secrets.STAGING_JWT_TOKEN }}
+          config: tokenprobe.toml
+          output-format: json
+          output-file: staging-audit.json
+          fail-on: high
+
+      # Example 4: Active checks (requires explicit authorization)
+      - name: Active security probe
+        uses: sumitjhaa/tokenprobe@main
+        with:
+          token: ${{ secrets.TEST_JWT_TOKEN }}
+          active: 'true'
+          target-url: https://api.example.com
+          i-own-this-system: 'true'
+          output-format: json
+          output-file: active-audit.json
+          fail-on: critical
+
+      # Example 5: Upload all reports as artifacts
+      - name: Upload audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jwt-audit-reports
+          path: |
+            production-audit.json
+            test-audit.json
+            staging-audit.json
+            active-audit.json
+          retention-days: 30
+
+      # Example 6: Comment on PR with findings
+      - name: Comment PR with findings
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## ⚠️ JWT Security Issues Found\n\n';
+            
+            const files = ['production-audit.json', 'test-audit.json', 'staging-audit.json'];
+            for (const file of files) {
+              if (fs.existsSync(file)) {
+                const report = JSON.parse(fs.readFileSync(file, 'utf8'));
+                if (report.findings && report.findings.length > 0) {
+                  comment += `### ${file}\n`;
+                  comment += `- Total findings: ${report.findings.length}\n`;
+                  comment += `- Critical: ${report.summary.critical}\n`;
+                  comment += `- High: ${report.summary.high}\n`;
+                  comment += `- Medium: ${report.summary.medium}\n\n`;
+                }
+              }
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

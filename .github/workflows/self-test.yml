@@ -1,0 +1,60 @@
+name: Self-Test Action
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test-action:
+    runs-on: ubuntu-latest
+    name: Test GitHub Action
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test with clean token
+        id: clean-test
+        uses: ./
+        with:
+          token: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDM2MDAsImlzcyI6ImF1dGguZXhhbXBsZS5jb20iLCJhdWQiOiJhcGkuZXhhbXBsZS5jb20ifQ.fake'
+          output-format: json
+          output-file: clean-report.json
+          fail-on: high
+
+      - name: Verify clean token passed
+        run: |
+          if [ "${{ steps.clean-test.outputs.exit-code }}" != "0" ]; then
+            echo "::error::Clean token should have exit code 0"
+            exit 1
+          fi
+          echo "✓ Clean token test passed"
+
+      - name: Test with problematic token
+        id: problem-test
+        continue-on-error: true
+        uses: ./
+        with:
+          token: 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIn0.'
+          output-format: json
+          output-file: problem-report.json
+          fail-on: high
+
+      - name: Verify problematic token failed
+        run: |
+          if [ "${{ steps.problem-test.outputs.exit-code }}" != "1" ]; then
+            echo "::error::Problematic token should have exit code 1"
+            exit 1
+          fi
+          echo "✓ Problematic token test passed"
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            clean-report.json
+            problem-report.json
+          retention-days: 7

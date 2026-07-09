@@ -1,0 +1,180 @@
+name: 'TokenProbe JWT Security Audit'
+description: 'Audit JWT tokens for security misconfigurations'
+author: 'TokenProbe'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  token:
+    description: 'JWT token to audit (can also use token-file)'
+    required: false
+  token-file:
+    description: 'Path to file containing JWT token(s)'
+    required: false
+  config:
+    description: 'Path to TOML configuration file'
+    required: false
+  fail-on:
+    description: 'Severity level to fail on (critical, high, medium, low, info)'
+    required: false
+    default: 'high'
+  output-format:
+    description: 'Output format (text, json)'
+    required: false
+    default: 'text'
+  output-file:
+    description: 'Path to save output report'
+    required: false
+  active:
+    description: 'Enable active checks (requires target-url)'
+    required: false
+    default: 'false'
+  target-url:
+    description: 'Target URL for active checks'
+    required: false
+  i-own-this-system:
+    description: 'Confirm authorization for active checks'
+    required: false
+    default: 'false'
+
+outputs:
+  exit-code:
+    description: 'Exit code from TokenProbe (0=clean, 1=findings, 2=error)'
+    value: ${{ steps.audit.outputs.exit-code }}
+  findings-count:
+    description: 'Total number of findings'
+    value: ${{ steps.audit.outputs.findings-count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install TokenProbe
+      shell: bash
+      run: |
+        if [ -d "${{ github.action_path }}" ]; then
+          pip install -e "${{ github.action_path }}"
+        else
+          pip install git+https://github.com/sumitjhaa/tokenprobe.git
+        fi
+
+    - name: Validate inputs
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.token }}" ] && [ -z "${{ inputs.token-file }}" ]; then
+          echo "::error::Either 'token' or 'token-file' input is required"
+          exit 1
+        fi
+        
+        if [ "${{ inputs.active }}" = "true" ]; then
+          if [ -z "${{ inputs.target-url }}" ]; then
+            echo "::error::'target-url' is required when 'active' is true"
+            exit 1
+          fi
+          if [ "${{ inputs.i-own-this-system }}" != "true" ]; then
+            echo "::error::'i-own-this-system' must be 'true' for active checks"
+            exit 1
+          fi
+        fi
+
+    - name: Run TokenProbe audit
+      id: audit
+      shell: bash
+      run: |
+        # Build command
+        CMD="jwtcheck"
+        
+        # Add token or token-file
+        if [ -n "${{ inputs.token }}" ]; then
+          CMD="$CMD '${{ inputs.token }}'"
+        elif [ -n "${{ inputs.token-file }}" ]; then
+          if [ -f "${{ inputs.token-file }}" ]; then
+            # Check if it's a batch file (multiple lines)
+            LINE_COUNT=$(wc -l < "${{ inputs.token-file }}")
+            if [ "$LINE_COUNT" -gt 1 ]; then
+              CMD="$CMD --batch ${{ inputs.token-file }}"
+            else
+              TOKEN=$(cat "${{ inputs.token-file }}")
+              CMD="$CMD '$TOKEN'"
+            fi
+          else
+            echo "::error::Token file not found: ${{ inputs.token-file }}"
+            exit 1
+          fi
+        fi
+        
+        # Add config if provided
+        if [ -n "${{ inputs.config }}" ]; then
+          if [ -f "${{ inputs.config }}" ]; then
+            CMD="$CMD --config ${{ inputs.config }}"
+          else
+            echo "::error::Config file not found: ${{ inputs.config }}"
+            exit 1
+          fi
+        fi
+        
+        # Add output format
+        if [ "${{ inputs.output-format }}" = "json" ]; then
+          CMD="$CMD --json"
+        fi
+        
+        # Add active checks if enabled
+        if [ "${{ inputs.active }}" = "true" ]; then
+          CMD="$CMD --active --target ${{ inputs.target-url }} --i-own-this-system"
+        fi
+        
+        # Add output file if specified
+        if [ -n "${{ inputs.output-file }}" ]; then
+          CMD="$CMD > ${{ inputs.output-file }}"
+        fi
+        
+        # Run the command
+        echo "Running: $CMD"
+        set +e
+        eval $CMD
+        EXIT_CODE=$?
+        set -e
+        
+        # Set outputs
+        echo "exit-code=$EXIT_CODE" >> $GITHUB_OUTPUT
+        
+        # Count findings if JSON output
+        if [ "${{ inputs.output-format }}" = "json" ] && [ -n "${{ inputs.output-file }}" ] && [ -f "${{ inputs.output-file }}" ]; then
+          FINDINGS_COUNT=$(jq '.findings | length' "${{ inputs.output-file }}" 2>/dev/null || echo "0")
+          echo "findings-count=$FINDINGS_COUNT" >> $GITHUB_OUTPUT
+        else
+          echo "findings-count=0" >> $GITHUB_OUTPUT
+        fi
+        
+        # Check if we should fail based on severity
+        FAIL_ON="${{ inputs.fail-on }}"
+        SHOULD_FAIL=false
+        
+        if [ "$EXIT_CODE" -eq 1 ]; then
+          # TokenProbe found issues
+          if [ "$FAIL_ON" = "high" ] || [ "$FAIL_ON" = "medium" ] || [ "$FAIL_ON" = "low" ] || [ "$FAIL_ON" = "info" ]; then
+            SHOULD_FAIL=true
+          fi
+        elif [ "$EXIT_CODE" -eq 2 ]; then
+          # TokenProbe error
+          SHOULD_FAIL=true
+        fi
+        
+        if [ "$SHOULD_FAIL" = "true" ]; then
+          echo "::error::TokenProbe found security issues or encountered an error"
+          exit $EXIT_CODE
+        fi
+
+    - name: Upload report
+      if: always() && inputs.output-file != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: tokenprobe-report
+        path: ${{ inputs.output-file }}
+        retention-days: 30
