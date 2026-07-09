@@ -66,6 +66,8 @@ def _build_registry(active: bool = False, config: TokenProbeConfig | None = None
 @click.option("--i-own-this-system", is_flag=True, help="Confirm authorization")
 @click.option("--pubkey", type=click.Path(exists=True), help="RSA public key PEM file")
 @click.option("--config", "config_path", type=click.Path(exists=True), help="Config file (TOML)")
+@click.option("--batch", is_flag=True, help="Batch mode: TOKEN is a file path with multiple tokens")
+@click.option("--batch-output", type=click.Path(path_type=Path), help="Save batch results to file")
 @click.version_option(version=__version__, prog_name="jwtcheck")
 def main(
     token: str | None,
@@ -78,6 +80,8 @@ def main(
     i_own_this_system: bool,
     pubkey: str | None,
     config_path: str | None,
+    batch: bool,
+    batch_output: Path | None,
 ) -> None:
     """
     JWT Misconfiguration Checker - Audit JWT tokens for security issues.
@@ -121,6 +125,79 @@ def main(
             _phase.end("Config load failed", success=False, error=e)
             sys.exit(2)
 
+    # Batch mode
+    if batch:
+        if token is None:
+            console.print("[red]Error:[/red] Batch mode requires a file path.", style="bold")
+            _phase.end("No batch file", success=False)
+            sys.exit(2)
+
+        from jwtcheck.core.batch import load_tokens_from_file, process_batch, save_batch_result
+
+        try:
+            file_path = Path(token)
+            tokens = load_tokens_from_file(file_path)
+
+            if not tokens:
+                console.print("[yellow]Warning:[/yellow] No tokens found in file.")
+                _phase.end("Empty batch file", success=False)
+                sys.exit(0)
+
+            pubkey_pem = None
+            if pubkey:
+                with open(pubkey) as f:
+                    pubkey_pem = f.read()
+
+            _phase.info("Starting batch processing", token_count=len(tokens))
+            result = process_batch(tokens, active, target, pubkey_pem, config)
+
+            # Save to file if requested
+            if batch_output:
+                save_batch_result(result, batch_output)
+                console.print(f"[green]✓[/green] Batch results saved to {batch_output}")
+
+            # Output summary
+            if output_json:
+                import json
+                console.print(json.dumps(result.to_dict(), indent=2))
+            else:
+                console.print()
+                console.print("[bold]Batch Processing Summary[/bold]")
+                console.print(f"  Total tokens:    {result.total_tokens}")
+                console.print(f"  Processed:       {result.processed_tokens}")
+                console.print(f"  Failed:          {len(result.errors)}")
+                console.print(f"  Success rate:    {result.success_rate:.1f}%")
+                console.print(f"  Total findings:  {result.total_findings}")
+                console.print()
+
+                severity = result.severity_summary
+                console.print("[bold]Severity Breakdown:[/bold]")
+                console.print(f"  Critical: {severity['critical']}")
+                console.print(f"  High:     {severity['high']}")
+                console.print(f"  Medium:   {severity['medium']}")
+                console.print(f"  Low:      {severity['low']}")
+                console.print(f"  Info:     {severity['info']}")
+
+                if result.errors:
+                    console.print()
+                    console.print("[bold red]Errors:[/bold red]")
+                    for err in result.errors:
+                        console.print(f"  Token: {err['token']}")
+                        console.print(f"  Error: {err['error']}")
+
+            # Exit code based on findings
+            has_critical_or_high = severity["critical"] > 0 or severity["high"] > 0
+            exit_code = 1 if has_critical_or_high else 0
+
+            _phase.end("Batch complete", exit_code=exit_code)
+            sys.exit(exit_code)
+
+        except Exception as e:
+            console.print(f"[red]Error in batch mode:[/red] {e}")
+            _phase.end("Batch failed", success=False, error=e)
+            sys.exit(2)
+
+    # Single token mode
     if token is None:
         if sys.stdin.isatty():
             console.print("[red]Error:[/red] No token provided.", style="bold")
