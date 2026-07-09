@@ -22,7 +22,7 @@ _phase = PhaseLogger("static_checks")
 LONG_LIVED_THRESHOLD = 86400  # 24 hours in seconds
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
-PHONE_REGEX = re.compile(r"\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b")
+PHONE_REGEX = re.compile(r"(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}")
 SSN_REGEX = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
 
@@ -414,4 +414,5 @@ def run_all_static_checks(token: DecodedToken) -> list[Finding]:
             error_logger.capture(e, context={"check": check.metadata.name})
 
     _phase.end("Static checks complete", success=True, total_findings=len(all_findings))
+    all_findings.sort(key=lambda f: f.severity.weight, reverse=True)
     return all_findings

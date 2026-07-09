@@ -131,16 +131,15 @@ def decode_token(token: str) -> DecodedToken:
     Raises:
         DecodeError: If the token structure is invalid or segments cannot be decoded.
     """
-    token_preview = token[:20] if len(token) > 20 else token
-    _phase.start("Decoding JWT token", length=len(token), preview=token_preview)
-
-    if not token or not isinstance(token, str):
+    if not isinstance(token, str) or not token.strip():
         err = DecodeError("Token must be a non-empty string")
         _error.capture(err, context={"token_type": type(token).__name__})
-        _phase.end("Token is empty or not a string", success=False, error=err)
         raise err
 
     token = token.strip()
+    token_preview = token[:20] if len(token) > 20 else token
+    _phase.start("Decoding JWT token", length=len(token), preview=token_preview)
+
     parts = token.split(".")
 
     if len(parts) != 3:
