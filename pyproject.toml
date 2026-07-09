@@ -51,7 +51,7 @@ Repository = "https://github.com/sumitjhaa/tokenprobe"
 Issues = "https://github.com/sumitjhaa/tokenprobe/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["tokenprobe"]
+packages = ["tokenprobe", "backend"]
 
 [tool.pytest.ini_options]
 testpaths = ["tokenprobe/tests"]
