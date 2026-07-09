@@ -18,7 +18,9 @@ from tokenprobe.core.config import (
     filter_checks_by_config,
     load_config,
 )
+from tokenprobe.core.decoder import DecodeError
 from tokenprobe.core.findings import Report
+from tokenprobe.core.jwe_decoder import JWEDecodeError
 from tokenprobe.core.unified_decoder import decode_jwt, is_jwe
 
 app = FastAPI(
@@ -132,7 +134,7 @@ async def analyze_token(req: AnalyzeRequest):
     try:
         result = _make_report(req.token, req.config)
         return result
-    except ValueError as e:
+    except (ValueError, DecodeError, JWEDecodeError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {e}") from e
@@ -191,7 +193,7 @@ async def analyze_jwe(req: AnalyzeRequest):
         if result["token_type"] != "jwe":
             result["error"] = "Token is not a JWE (expected 5-part structure)"
         return result
-    except ValueError as e:
+    except (ValueError, DecodeError, JWEDecodeError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"JWE analysis failed: {e}") from e
