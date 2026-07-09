@@ -71,7 +71,7 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
           onChange={(e) => setToken(e.target.value)}
           placeholder="Paste your JWT or JWE token here..."
           className="input"
-          style={{ minHeight: "8rem" }}
+          style={{ minHeight: "10rem" }}
           spellCheck={false}
         />
 

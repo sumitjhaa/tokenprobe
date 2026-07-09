@@ -17,10 +17,7 @@ export default function BatchPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: result, loading, error, execute, reset } = useApi<BatchResponse>();
 
-  const onFileSelected = (f: File) => {
-    setFile(f);
-    reset();
-  };
+  const onFileSelected = (f: File) => { setFile(f); reset(); };
 
   const handleDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -29,25 +26,17 @@ export default function BatchPage() {
     if (f) onFileSelected(f);
   };
 
-  const handleRun = () => {
-    if (!file) return;
-    execute(() => analyzeBatch(file));
-  };
-
   return (
     <ErrorBoundary>
       <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
         <div className="text-center" style={{ marginBottom: "1.5rem" }}>
-          <Upload size={22} style={{ margin: "0 auto 0.75rem", color: "var(--accent)" }} />
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Batch Analysis</h1>
-          <p style={{ marginTop: "0.25rem", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-            Upload a text file with one token per line, or a JSON array of tokens.
-          </p>
+          <Upload size={28} style={{ color: "var(--accent)" }} />
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginTop: "0.5rem" }}>Batch Analysis</h1>
         </div>
 
         <div
           className={cn("dropzone", isDragging && "dropzone-active")}
-          style={{ textAlign: "center", padding: "2rem", cursor: "pointer" }}
+          style={{ textAlign: "center", padding: "2.5rem", cursor: "pointer" }}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
@@ -62,60 +51,57 @@ export default function BatchPage() {
           />
           {file ? (
             <div className="flex items-center justify-center gap-2">
-              <FileText size={18} style={{ color: "var(--accent)" }} />
-              <span style={{ fontWeight: 500 }}>{file.name}</span>
+              <FileText size={22} style={{ color: "var(--accent)" }} />
+              <span style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{file.name}</span>
               <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>({(file.size / 1024).toFixed(1)} KB)</span>
             </div>
           ) : (
             <>
-              <Upload size={32} style={{ margin: "0 auto 0.5rem", color: "var(--text-muted)" }} />
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>Drop a file here or click to browse</p>
-              <p style={{ fontSize: "0.6875rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>.txt (one per line) or .json</p>
+              <Upload size={40} style={{ margin: "0 auto 0.75rem", color: "var(--text-muted)" }} />
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem" }}>Drop file or click to browse</p>
             </>
           )}
         </div>
 
-        <Button
-          onClick={handleRun}
-          disabled={!file}
-          loading={loading}
-          style={{ width: "100%", marginTop: "0.75rem" }}
-        >
-          {loading ? "Analyzing..." : `Analyze ${file ? file.name : "file"}`}
-        </Button>
-
-        {loading && (
-          <div className="flex justify-center py-8">
-            <Spinner size="lg" />
-          </div>
+        {file && (
+          <Button
+            onClick={() => execute(() => analyzeBatch(file))}
+            disabled={loading}
+            loading={loading}
+            style={{ width: "100%", marginTop: "0.75rem" }}
+          >
+            {loading ? "Analyzing..." : "Analyze"}
+          </Button>
         )}
 
+        {loading && <div className="flex justify-center py-8"><Spinner size="lg" /></div>}
+
         {error && (
-          <div style={{ marginTop: "1.25rem", padding: "0.875rem", background: "var(--danger-soft)", color: "var(--danger)", fontSize: "0.875rem" }}>
-            <div className="flex items-start gap-2">
-              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: "0.125rem" }} />
+          <div style={{ marginTop: "1.25rem", padding: "1rem", background: "var(--danger-soft)", color: "var(--danger)", fontSize: "0.9375rem" }}>
+            <div className="flex items-center gap-2">
+              <AlertCircle size={18} />
               <span>{error}</span>
             </div>
           </div>
         )}
 
         {result && (
-          <div className="animate-fade-in" style={{ marginTop: "1.25rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" }}>
+          <div className="animate-fade-in" style={{ marginTop: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.75rem" }}>
               {[
                 { label: "Total", value: result.total_tokens },
                 { label: "Processed", value: result.processed_tokens },
                 { label: "Failed", value: result.failed },
                 { label: "Findings", value: result.total_findings },
               ].map((stat) => (
-                <div key={stat.label} style={{ padding: "0.75rem", background: "var(--bg)", textAlign: "center" }}>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700, lineHeight: 1.2 }}>{stat.value}</div>
-                  <div style={{ fontSize: "0.6875rem", color: "var(--text-muted)", marginTop: "0.125rem" }}>{stat.label}</div>
+                <div key={stat.label} style={{ padding: "1rem", background: "var(--bg)", textAlign: "center" }}>
+                  <div style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1.2 }}>{stat.value}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.125rem" }}>{stat.label}</div>
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-2 flex-wrap" style={{ marginTop: "0.75rem" }}>
+            <div className="flex gap-2 flex-wrap" style={{ marginTop: "1rem" }}>
               {severityOrder.map((s) => {
                 const count = result.severity_summary[s] || 0;
                 if (count === 0) return null;
@@ -124,18 +110,17 @@ export default function BatchPage() {
             </div>
 
             {result.results.length > 0 && (
-              <div style={{ marginTop: "0.75rem" }}>
-                <h3 style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Results</h3>
+              <div style={{ marginTop: "1rem" }}>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   {result.results.map((r) => (
                     <div key={r.index} className="batch-row">
-                      <code className="truncate" style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxWidth: "70%" }}>
+                      <code className="truncate" style={{ fontSize: "0.8125rem", color: "var(--text-muted)", maxWidth: "70%" }}>
                         {r.token_preview}
                       </code>
                       {r.error ? (
-                        <AlertCircle size={14} style={{ color: "var(--danger)", flexShrink: 0 }} />
+                        <AlertCircle size={16} style={{ color: "var(--danger)", flexShrink: 0 }} />
                       ) : (
-                        <CheckCircle size={14} style={{ color: "var(--success)", flexShrink: 0 }} />
+                        <CheckCircle size={16} style={{ color: "var(--success)", flexShrink: 0 }} />
                       )}
                     </div>
                   ))}

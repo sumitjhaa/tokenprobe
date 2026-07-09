@@ -299,16 +299,16 @@
 
 textarea.input {
   resize: vertical;
-  min-height: 8rem;
+  min-height: 10rem;
   font-family: "SF Mono", "Fira Code", "Roboto Mono", monospace;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
 /* ─── Drop zone ─── */
 .dropzone {
-  border: 1px dashed var(--border);
-  padding: 1.25rem;
+  border: 2px dashed var(--border);
+  padding: 1.5rem;
   transition: all 0.2s ease;
   cursor: pointer;
 }
