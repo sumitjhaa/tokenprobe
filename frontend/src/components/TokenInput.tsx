@@ -58,7 +58,7 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
   const hasToken = token.trim().length > 0;
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
+    <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto", position: "relative", zIndex: 2 }}>
       <div
         className={cn("dropzone", isDragging && "dropzone-active")}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
