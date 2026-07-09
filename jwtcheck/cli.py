@@ -51,6 +51,26 @@ _phase = PhaseLogger("cli")
     is_flag=True,
     help="Disable logging to files (console only)",
 )
+@click.option(
+    "--active",
+    is_flag=True,
+    help="Enable active checks (requires --target and --i-own-this-system)",
+)
+@click.option(
+    "--target",
+    type=str,
+    help="Target endpoint URL for active checks",
+)
+@click.option(
+    "--i-own-this-system",
+    is_flag=True,
+    help="Confirm you own or have permission to test the target system",
+)
+@click.option(
+    "--pubkey",
+    type=click.Path(exists=True),
+    help="Path to RSA public key PEM file (for algorithm confusion probe)",
+)
 @click.version_option(version=__version__, prog_name="jwtcheck")
 def main(
     token: str | None,
@@ -58,6 +78,10 @@ def main(
     verbose: bool,
     log_dir: Path | None,
     no_log_file: bool,
+    active: bool,
+    target: str | None,
+    i_own_this_system: bool,
+    pubkey: str | None,
 ) -> None:
     """
     JWT Misconfiguration Checker - Audit JWT tokens for security issues.
@@ -71,8 +95,27 @@ def main(
         echo $JWT_TOKEN | jwtcheck
 
         jwtcheck --json $JWT_TOKEN > report.json
+
+        jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
     """
     _phase.start("CLI invocation", version=__version__)
+
+    # Validate active check safety gates
+    if active:
+        if not target or not i_own_this_system:
+            console = Console()
+            console.print(
+                "[bold red]Error:[/bold red] Active checks require all three flags:",
+                style="bold",
+            )
+            console.print("  --active --target <url> --i-own-this-system")
+            console.print()
+            console.print(
+                "[yellow]Warning:[/yellow] Active checks probe a live endpoint. "
+                "Only use on systems you own or have explicit permission to test."
+            )
+            _phase.end("Active check safety gate failed", success=False)
+            sys.exit(2)
 
     # Setup logging
     log_to_file = not no_log_file
@@ -106,10 +149,27 @@ def main(
         report.token_valid_structure = True
 
         _phase.info("Running static checks")
+        from jwtcheck.core.checks.static import run_all_static_checks
         findings = run_all_static_checks(decoded)
 
         for finding in findings:
             report.add_finding(finding)
+
+        # Run active checks if enabled
+        if active:
+            _phase.info("Running active checks", target=target)
+            from jwtcheck.core.checks.active import run_all_active_checks
+
+            pubkey_pem = None
+            if pubkey:
+                with open(pubkey, "r") as f:
+                    pubkey_pem = f.read()
+
+            active_findings = run_all_active_checks(
+                decoded, target=target, pubkey_pem=pubkey_pem
+            )
+            for finding in active_findings:
+                report.add_finding(finding)
 
         report.finalize()
 
