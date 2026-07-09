@@ -58,7 +58,7 @@ export default function HomePage() {
             const Icon = f.icon;
             return (
               <div key={f.label} className="demo-card">
-                <Icon size={14} style={{ color: "var(--accent)" }} />
+                <Icon size={12} style={{ color: "var(--accent)" }} />
                 <div>
                   <div className="demo-card-label">{f.label}</div>
                   <div className="demo-card-desc">{f.desc}</div>

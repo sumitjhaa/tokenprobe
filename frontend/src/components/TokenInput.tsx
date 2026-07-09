@@ -102,7 +102,7 @@ export default function TokenInput({ onAnalyze, loading }: Props) {
             <Upload size={14} />
             Open File
           </Button>
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", zIndex: 1 }}>
             <Button variant="secondary" onClick={() => setShowSamples(!showSamples)}>
               <FileCode size={14} />
               Samples
