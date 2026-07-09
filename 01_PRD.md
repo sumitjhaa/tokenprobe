@@ -33,7 +33,7 @@ Backend/security engineers doing a quick audit of their own service's JWT handli
 - Flag missing `aud` / `iss` claims
 - Flag sensitive-looking data in payload (email, PII patterns) — informational, not blocking
 - Severity levels: Critical / High / Medium / Info
-- CLI: `jwtcheck <token>` → human-readable report
+- CLI: `tokenprobe <token>` → human-readable report
 - Exit code 1 if any Critical/High finding (CI-friendly)
 
 **P1 — Active checks (require a target endpoint, opt-in)**

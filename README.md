@@ -6,7 +6,7 @@ A fast, offline CLI tool and Python library for auditing JWT tokens for security
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
 ![CI](https://github.com/sumitjhaa/tokenprobe/workflows/CI/badge.svg)
 
-## Why jwtcheck?
+## Why TokenProbe?
 
 JWTs are the default auth token format across modern APIs, but they're commonly misconfigured in ways that are silently exploitable:
 
@@ -17,7 +17,7 @@ JWTs are the default auth token format across modern APIs, but they're commonly 
 - Missing audience/issuer checks
 - Sensitive data (PII) in payloads
 
-**jwtcheck** catches these issues in seconds, with zero setup. No network calls, no configuration — just paste your token and get a clear, actionable report.
+**TokenProbe** catches these issues in seconds, with zero setup. No network calls, no configuration — just paste your token and get a clear, actionable report.
 
 ## Features
 
@@ -48,7 +48,7 @@ JWTs are the default auth token format across modern APIs, but they're commonly 
 ## Installation
 
 ```bash
-pip install jwtcheck
+pip install tokenprobe
 ```
 
 ## Quick Start
@@ -56,7 +56,7 @@ pip install jwtcheck
 ### Analyze a token
 
 ```bash
-jwtcheck eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c
+tokenprobe eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c
 ```
 
 ### Output example (text)
@@ -101,7 +101,7 @@ Exit code: 1 (critical/high issues found)
 ### JSON output (for CI/tooling)
 
 ```bash
-jwtcheck --json $JWT_TOKEN > report.json
+tokenprobe --json $JWT_TOKEN > report.json
 ```
 
 ```json
@@ -131,17 +131,17 @@ jwtcheck --json $JWT_TOKEN > report.json
 ### Read from stdin
 
 ```bash
-echo $JWT_TOKEN | jwtcheck
+echo $JWT_TOKEN | tokenprobe
 ```
 
 ### Active checks (probe live endpoint)
 
 ```bash
 # Weak secret brute force + algorithm confusion probe
-jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
+tokenprobe --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
 
 # With custom public key for algorithm confusion probe
-jwtcheck --active --target https://api.example.com/auth --pubkey ./server.pub --i-own-this-system $JWT_TOKEN
+tokenprobe --active --target https://api.example.com/auth --pubkey ./server.pub --i-own-this-system $JWT_TOKEN
 ```
 
 **⚠️ Active checks require all three flags:**
@@ -153,16 +153,16 @@ jwtcheck --active --target https://api.example.com/auth --pubkey ./server.pub --
 ### Verbose logging
 
 ```bash
-jwtcheck --verbose $JWT_TOKEN
+tokenprobe --verbose $JWT_TOKEN
 ```
 
-Logs are written to `logs/jwtcheck.log`, `logs/phases.log`, and `logs/errors.log`.
+Logs are written to `logs/tokenprobe.log`, `logs/phases.log`, and `logs/errors.log`.
 
 ### Custom configuration
 
 ```bash
 # Use a TOML config file for custom claim requirements
-jwtcheck --config tokenprobe.toml $JWT_TOKEN
+tokenprobe --config tokenprobe.toml $JWT_TOKEN
 ```
 
 Example `tokenprobe.toml`:
@@ -189,13 +189,13 @@ message = "Role must be admin, user, or moderator"
 
 ```bash
 # Analyze multiple tokens from a text file (one per line)
-jwtcheck --batch tokens.txt
+tokenprobe --batch tokens.txt
 
 # Analyze tokens from a JSON file
-jwtcheck --batch tokens.json
+tokenprobe --batch tokens.json
 
 # Save batch results to a file
-jwtcheck --batch tokens.txt --batch-output results.json
+tokenprobe --batch tokens.txt --batch-output results.json
 ```
 
 Example `tokens.txt`:
@@ -210,7 +210,7 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.fake
 
 ```bash
 # Analyze a JWE token (5-part structure)
-jwtcheck $JWE_TOKEN
+tokenprobe $JWE_TOKEN
 
 # JWE tokens are automatically detected and analyzed
 # Only header checks are performed (payload is encrypted)
@@ -243,8 +243,8 @@ See [examples/github-action-example.yml](examples/github-action-example.yml) for
 ```yaml
 - name: Audit JWT token
   run: |
-      pip install jwtcheck
-      jwtcheck --json ${{ secrets.TEST_JWT_TOKEN }} > jwt-report.json
+      pip install tokenprobe
+      tokenprobe --json ${{ secrets.TEST_JWT_TOKEN }} > jwt-report.json
       if [ $? -ne 0 ]; then
         echo "JWT security issues detected!"
         cat jwt-report.json
@@ -283,7 +283,7 @@ See [examples/github-action-example.yml](examples/github-action-example.yml) for
 **⚠️ Active checks require explicit opt-in:**
 
 ```bash
-jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
+tokenprobe --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
 ```
 
 ### P2 — JWE Checks (Encrypted JWTs)
@@ -305,10 +305,10 @@ jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT
 ## Python Library Usage
 
 ```python
-from jwtcheck.core.decoder import decode_token
-from jwtcheck.core.checks.engine import CheckExecutor
-from jwtcheck.core.checks.static import STATIC_CHECKS
-from jwtcheck.core.findings import Report
+from tokenprobe.core.decoder import decode_token
+from tokenprobe.core.checks.engine import CheckExecutor
+from tokenprobe.core.checks.static import STATIC_CHECKS
+from tokenprobe.core.findings import Report
 
 # Decode token (no signature verification)
 token = decode_token("eyJhbGci...")
@@ -357,7 +357,7 @@ pytest
 ### Lint
 
 ```bash
-ruff check jwtcheck/
+ruff check tokenprobe/
 ```
 
 ### Build
@@ -370,29 +370,35 @@ python -m build
 ## Architecture
 
 ```
-jwtcheck/
+tokenprobe/
 ├── core/
 │   ├── decoder.py          # JWT decoding (no verification)
+│   ├── jwe_decoder.py      # JWE (encrypted JWT) decoding
+│   ├── unified_decoder.py  # Auto-detect JWE/JWT and decode
 │   ├── findings.py         # Finding, Severity, Report models
 │   ├── validation.py       # Input validation & sanitization
 │   ├── wordlist.py         # Weak secrets wordlist
+│   ├── config.py           # TOML config loading & validation
+│   ├── batch.py            # Batch token analysis engine
 │   └── checks/
 │       ├── engine.py       # CheckExecutor & CheckRegistry
+│       ├── base.py         # Check protocol & metadata
 │       ├── static.py       # P0 static checks (8 checks)
-│       └── active.py       # P1 active checks (2 checks)
+│       ├── active.py       # P1 active checks (2 checks)
+│       └── jwe.py          # P2 JWE-specific checks (4 checks)
 ├── report/
 │   ├── text_report.py      # Rich terminal output
 │   └── json_report.py      # JSON output
 ├── logging_config.py       # Phase + error logging
 ├── cli.py                  # Click CLI
-└── tests/                  # 142 unit tests
+└── tests/                  # 219 unit tests
 ```
 
 ## Logging
 
-jwtcheck provides comprehensive logging for debugging and audit trails:
+TokenProbe provides comprehensive logging for debugging and audit trails:
 
-- **`logs/jwtcheck.log`** — Full application log (DEBUG level)
+- **`logs/tokenprobe.log`** — Full application log (DEBUG level)
 - **`logs/phases.log`** — Structured phase tracking (DECODING, STATIC_CHECK, etc.)
 - **`logs/errors.log`** — Error-only log with stack traces
 
@@ -423,8 +429,8 @@ This tool is designed for **auditing systems you own or have explicit permission
 - [x] P2: JWE (encrypted JWT) support
 - [x] P2: Batch token analysis (file input)
 - [ ] P3: Web UI for interactive analysis
+- [ ] P3: Plugin system for third-party checks
 - [ ] P3: VS Code extension
-- [ ] P3: Pre-commit hooks
 
 ## Contributing
 

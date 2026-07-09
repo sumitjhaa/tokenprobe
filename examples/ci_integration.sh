@@ -14,8 +14,8 @@ REPORT_FILE="jwt-audit-report.json"
 
 echo "Running JWT security audit..."
 
-# Run jwtcheck with JSON output
-jwtcheck --json "$TOKEN" > "$REPORT_FILE"
+# Run tokenprobe with JSON output
+tokenprobe --json "$TOKEN" > "$REPORT_FILE"
 
 EXIT_CODE=$?
 

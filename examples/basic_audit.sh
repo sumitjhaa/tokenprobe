@@ -17,8 +17,8 @@ echo ""
 echo "Token: ${TOKEN:0:50}..."
 echo ""
 
-# Run jwtcheck with text output
-jwtcheck "$TOKEN"
+# Run tokenprobe with text output
+tokenprobe "$TOKEN"
 
 EXIT_CODE=$?
 

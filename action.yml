@@ -88,7 +88,7 @@ runs:
       shell: bash
       run: |
         # Build command
-        CMD="jwtcheck"
+        CMD="tokenprobe"
         
         # Add token or token-file
         if [ -n "${{ inputs.token }}" ]; then

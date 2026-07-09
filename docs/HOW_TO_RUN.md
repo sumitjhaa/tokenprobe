@@ -13,7 +13,7 @@ cd tokenprobe
 ./scripts/install.sh
 
 # 3. Run your first scan
-jwtcheck eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c
+tokenprobe eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c
 ```
 
 That's it! You'll see a formatted security report with findings and remediation advice.
@@ -26,27 +26,27 @@ That's it! You'll see a formatted security report with findings and remediation 
 
 ```bash
 # Analyze a token passed as argument
-jwtcheck <token>
+tokenprobe <token>
 
 # Analyze from stdin
-echo "<token>" | jwtcheck
-cat token.txt | jwtcheck
+echo "<token>" | tokenprobe
+cat token.txt | tokenprobe
 
 # With verbose logging
-jwtcheck --verbose <token>
+tokenprobe --verbose <token>
 ```
 
 ### Output Formats
 
 ```bash
 # Human-readable output (default)
-jwtcheck <token>
+tokenprobe <token>
 
 # JSON output (for automation)
-jwtcheck --json <token>
+tokenprobe --json <token>
 
 # Save JSON to file
-jwtcheck --json <token> > report.json
+tokenprobe --json <token> > report.json
 ```
 
 ### Active Checks (Network Required)
@@ -55,10 +55,10 @@ Active checks probe live endpoints and require explicit authorization:
 
 ```bash
 # Basic active scan
-jwtcheck --active --target https://api.example.com --i-own-this-system <token>
+tokenprobe --active --target https://api.example.com --i-own-this-system <token>
 
 # With custom public key for algorithm confusion test
-jwtcheck --active --target https://api.example.com --pubkey ./server.pub --i-own-this-system <token>
+tokenprobe --active --target https://api.example.com --pubkey ./server.pub --i-own-this-system <token>
 ```
 
 **Required flags for active checks:**
@@ -72,17 +72,17 @@ jwtcheck --active --target https://api.example.com --pubkey ./server.pub --i-own
 
 ```bash
 # Custom log directory
-jwtcheck --log-dir ./my-logs <token>
+tokenprobe --log-dir ./my-logs <token>
 
 # Disable file logging (console only)
-jwtcheck --no-log-file <token>
+tokenprobe --no-log-file <token>
 
 # Combine options
-jwtcheck --verbose --log-dir ./logs --json <token>
+tokenprobe --verbose --log-dir ./logs --json <token>
 ```
 
 **Log files created:**
-- `logs/jwtcheck.log` — Full application log
+- `logs/tokenprobe.log` — Full application log
 - `logs/phases.log` — Execution phases and timing
 - `logs/errors.log` — Error details with stack traces
 
@@ -92,7 +92,7 @@ Use a TOML config file to define custom claim requirements and validation rules:
 
 ```bash
 # Use config file
-jwtcheck --config tokenprobe.toml <token>
+tokenprobe --config tokenprobe.toml <token>
 ```
 
 **Example config file (`tokenprobe.toml`):**
@@ -124,16 +124,16 @@ Process multiple tokens from files:
 
 ```bash
 # Analyze tokens from text file (one per line)
-jwtcheck --batch tokens.txt
+tokenprobe --batch tokens.txt
 
 # Analyze tokens from JSON file
-jwtcheck --batch tokens.json
+tokenprobe --batch tokens.json
 
 # Save batch results to file
-jwtcheck --batch tokens.txt --batch-output results.json
+tokenprobe --batch tokens.txt --batch-output results.json
 
 # Batch with JSON output
-jwtcheck --batch tokens.txt --json > batch-report.json
+tokenprobe --batch tokens.txt --json > batch-report.json
 ```
 
 **Text file format (`tokens.txt`):**
@@ -161,7 +161,7 @@ TokenProbe automatically detects and analyzes JWE tokens (5-part structure):
 
 ```bash
 # Analyze a JWE token
-jwtcheck <jwe_token>
+tokenprobe <jwe_token>
 ```
 
 **JWE token structure:** `header.encrypted_key.iv.ciphertext.tag`
@@ -176,7 +176,7 @@ jwtcheck <jwe_token>
 ### CLI Reference
 
 ```
-Usage: jwtcheck [OPTIONS] [TOKEN]
+Usage: tokenprobe [OPTIONS] [TOKEN]
 
 Options:
   --json                    Output results as JSON
@@ -201,9 +201,9 @@ Options:
 ### Basic Analysis
 
 ```python
-from jwtcheck.core.decoder import decode_token
-from jwtcheck.core.checks.engine import CheckExecutor
-from jwtcheck.core.checks.static import STATIC_CHECKS
+from tokenprobe.core.decoder import decode_token
+from tokenprobe.core.checks.engine import CheckExecutor
+from tokenprobe.core.checks.static import STATIC_CHECKS
 
 # Decode token (no signature verification)
 token = decode_token("eyJhbGci...")
@@ -235,7 +235,7 @@ print(f"{len(successful)} checks completed successfully")
 ### Structured Report
 
 ```python
-from jwtcheck.core.findings import Report
+from tokenprobe.core.findings import Report
 
 # Build report
 report = Report()
@@ -258,7 +258,7 @@ with open("report.json", "w") as f:
 ### Custom Check Selection
 
 ```python
-from jwtcheck.core.checks.static import (
+from tokenprobe.core.checks.static import (
     AlgNoneCheck,
     MissingExpCheck,
     PiiInPayloadCheck,
@@ -273,7 +273,7 @@ executor.execute_all(token)
 ### Active Checks (Python)
 
 ```python
-from jwtcheck.core.checks.active import ACTIVE_CHECKS
+from tokenprobe.core.checks.active import ACTIVE_CHECKS
 
 # Combine static + active checks
 all_checks = STATIC_CHECKS + ACTIVE_CHECKS
@@ -285,6 +285,54 @@ executor.execute_all(
     target="https://api.example.com",
     pubkey_pem=open("server.pub").read()
 )
+```
+
+### Custom Config (Python)
+
+```python
+from tokenprobe.core.config import load_config
+
+# Load a TOML config with custom claim requirements
+config = load_config("tokenprobe.toml")
+print(f"Required claims: {config.required_claims}")
+
+# Config-driven required claim check
+from tokenprobe.core.checks.static import RequiredClaimsCheck
+check = RequiredClaimsCheck()
+findings = check.run(token, config=config)
+```
+
+### Batch Processing (Python)
+
+```python
+from tokenprobe.core.batch import load_tokens_from_file, run_batch_analysis
+
+# Load tokens from file
+tokens = load_tokens_from_file("tokens.txt")
+print(f"Loaded {len(tokens)} tokens")
+
+# Analyze all tokens
+results = run_batch_analysis(tokens)
+for result in results:
+    print(f"Token {result.token_index}: {len(result.findings)} findings")
+```
+
+### JWE Analysis (Python)
+
+```python
+from tokenprobe.core.jwe_decoder import decode_jwe_token
+from tokenprobe.core.checks.jwe import JWE_CHECKS
+from tokenprobe.core.checks.engine import CheckExecutor
+
+# Decode JWE token
+jwe_token = decode_jwe_token("eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00i...")
+
+# Run JWE-specific checks
+executor = CheckExecutor(JWE_CHECKS)
+executor.execute_all(jwe_token)
+
+for finding in executor.all_findings:
+    print(f"[{finding.severity.value}] {finding.check}: {finding.message}")
 ```
 
 ---
@@ -325,7 +373,7 @@ Check if your environment is ready:
 - Required dependencies
 - Project structure
 - Log directories
-- jwtcheck command availability
+- tokenprobe command availability
 
 **When to use:**
 - Troubleshooting installation issues
@@ -403,7 +451,7 @@ jobs:
       
       - name: Audit JWT Token
         run: |
-          jwtcheck --json ${{ secrets.JWT_TOKEN }} > audit-report.json
+          tokenprobe --json ${{ secrets.JWT_TOKEN }} > audit-report.json
           EXIT_CODE=$?
           
           echo "Exit code: $EXIT_CODE"
@@ -428,7 +476,7 @@ jwt-audit:
   script:
     - git clone https://github.com/sumitjhaa/tokenprobe.git
     - cd tokenprobe && pip install -e .
-    - jwtcheck --json $JWT_TOKEN > audit-report.json
+    - tokenprobe --json $JWT_TOKEN > audit-report.json
     - |
       if [ $? -eq 1 ]; then
         echo "Security issues found"
@@ -448,7 +496,7 @@ jwt-audit:
 
 **Usage in scripts:**
 ```bash
-jwtcheck --json <token> > report.json
+tokenprobe --json <token> > report.json
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
@@ -468,7 +516,7 @@ fi
 
 ### Command Not Found
 
-**Problem:** `jwtcheck: command not found`
+**Problem:** `tokenprobe: command not found`
 
 **Solutions:**
 ```bash
@@ -479,7 +527,7 @@ source venv/bin/activate
 ./scripts/install.sh
 
 # Or run via Python module
-python -m jwtcheck.cli <token>
+python -m tokenprobe.cli <token>
 ```
 
 ### Python Version Error
@@ -501,7 +549,7 @@ pyenv local 3.11.0
 
 ### Import Errors
 
-**Problem:** `ModuleNotFoundError: No module named 'jwtcheck'`
+**Problem:** `ModuleNotFoundError: No module named 'tokenprobe'`
 
 **Solution:**
 ```bash
@@ -510,7 +558,7 @@ pip install -e .
 
 # Or check you're in the right directory
 pwd  # Should be tokenprobe/
-ls jwtcheck/  # Should show core/, report/, etc.
+ls tokenprobe/  # Should show core/, report/, etc.
 ```
 
 ### Permission Denied on Scripts
@@ -530,7 +578,7 @@ chmod +x scripts/*.sh
 **Solution:**
 ```bash
 # You need ALL three flags
-jwtcheck --active \
+tokenprobe --active \
          --target https://api.example.com \
          --i-own-this-system \
          <token>
@@ -546,7 +594,7 @@ jwtcheck --active \
 mkdir -p logs
 
 # Run with explicit log directory
-jwtcheck --log-dir ./logs <token>
+tokenprobe --log-dir ./logs <token>
 
 # Check permissions
 ls -la logs/
@@ -578,10 +626,10 @@ pip install -e ".[dev]"
 **Solution:**
 ```bash
 # Disable file logging for clean JSON
-jwtcheck --no-log-file --json <token> > report.json
+tokenprobe --no-log-file --json <token> > report.json
 
 # Or redirect stderr
-jwtcheck --json <token> 2>/dev/null > report.json
+tokenprobe --json <token> 2>/dev/null > report.json
 ```
 
 ### Token Decode Errors
@@ -596,7 +644,7 @@ jwtcheck --json <token> 2>/dev/null > report.json
 **Solution:**
 ```bash
 # Clean the token first
-echo "<token>" | tr -d '\n' | jwtcheck
+echo "<token>" | tr -d '\n' | tokenprobe
 
 # Or validate structure
 echo "<token>" | grep -E '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$'
@@ -612,7 +660,7 @@ echo "<token>" | grep -E '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$'
 # Process multiple tokens from file
 while read -r token; do
     echo "Analyzing: ${token:0:20}..."
-    jwtcheck --json "$token" > "report_$(date +%s).json"
+    tokenprobe --json "$token" > "report_$(date +%s).json"
 done < tokens.txt
 ```
 
@@ -622,21 +670,21 @@ done < tokens.txt
 # Extract token from HTTP response
 curl -s https://api.example.com/login | \
     jq -r '.token' | \
-    jwtcheck --json > audit.json
+    tokenprobe --json > audit.json
 
 # Analyze tokens from environment
-jwtcheck --json "$JWT_TOKEN" > report.json
+tokenprobe --json "$JWT_TOKEN" > report.json
 
 # Process tokens from Kubernetes secret
 kubectl get secret my-secret -o jsonpath='{.data.token}' | \
     base64 -d | \
-    jwtcheck
+    tokenprobe
 ```
 
 ### Custom Wordlists
 
 ```python
-from jwtcheck.core.wordlist import COMMON_SECRETS
+from tokenprobe.core.wordlist import COMMON_SECRETS
 
 # Extend the default wordlist
 CUSTOM_SECRETS = COMMON_SECRETS + [
@@ -645,7 +693,7 @@ CUSTOM_SECRETS = COMMON_SECRETS + [
 ]
 
 # Use in active checks
-from jwtcheck.core.checks.active import WeakSecretBruteforceCheck
+from tokenprobe.core.checks.active import WeakSecretBruteforceCheck
 check = WeakSecretBruteforceCheck()
 # Note: Custom wordlist support requires code modification
 ```
@@ -656,10 +704,10 @@ check = WeakSecretBruteforceCheck()
 
 ```bash
 # Show help message
-jwtcheck --help
+tokenprobe --help
 
 # Show version
-jwtcheck --version
+tokenprobe --version
 
 # Run demo
 ./scripts/dev.sh demo

@@ -71,4 +71,4 @@ cython_debug/
 logs/
 *.log
 .eggs/
-jwtcheck.egg-info/
+tokenprobe.egg-info/

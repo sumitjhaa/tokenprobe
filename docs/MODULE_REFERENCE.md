@@ -1,10 +1,10 @@
 # Module Reference — JWT Misconfiguration Checker
 
-Complete technical reference for all modules in jwtcheck.
+Complete technical reference for all modules in tokenprobe.
 
 ## Core Modules
 
-### `jwtcheck.core.decoder`
+### `tokenprobe.core.decoder`
 
 **Purpose:** Safe JWT token decoding without signature verification.
 
@@ -23,7 +23,7 @@ Complete technical reference for all modules in jwtcheck.
 
 **Usage:**
 ```python
-from jwtcheck.core.decoder import decode_token, DecodeError
+from tokenprobe.core.decoder import decode_token, DecodeError
 
 try:
     token = decode_token("eyJhbGci...")
@@ -35,7 +35,7 @@ except DecodeError as e:
 
 ---
 
-### `jwtcheck.core.findings`
+### `tokenprobe.core.findings`
 
 **Purpose:** Data models for security findings and reports.
 
@@ -54,7 +54,7 @@ except DecodeError as e:
 
 **Usage:**
 ```python
-from jwtcheck.core.findings import Finding, Severity, Report
+from tokenprobe.core.findings import Finding, Severity, Report
 
 finding = Finding(
     check="alg_none",
@@ -73,7 +73,7 @@ print(report.to_dict())  # JSON-serializable dict
 
 ---
 
-### `jwtcheck.core.validation`
+### `tokenprobe.core.validation`
 
 **Purpose:** Input validation and sanitization for security.
 
@@ -94,7 +94,7 @@ print(report.to_dict())  # JSON-serializable dict
 
 **Usage:**
 ```python
-from jwtcheck.core.validation import validate_token_format, ValidationError
+from tokenprobe.core.validation import validate_token_format, ValidationError
 
 try:
     token = validate_token_format("eyJhbGci...")
@@ -106,7 +106,7 @@ safe_log = sanitize_for_logging(token, max_length=50)
 
 ---
 
-### `jwtcheck.core.checks.engine`
+### `tokenprobe.core.checks.engine`
 
 **Purpose:** Check execution with error isolation.
 
@@ -125,8 +125,8 @@ safe_log = sanitize_for_logging(token, max_length=50)
 
 **Usage:**
 ```python
-from jwtcheck.core.checks.engine import CheckExecutor, CheckRegistry
-from jwtcheck.core.checks.static import STATIC_CHECKS
+from tokenprobe.core.checks.engine import CheckExecutor, CheckRegistry
+from tokenprobe.core.checks.static import STATIC_CHECKS
 
 registry = CheckRegistry()
 for check in STATIC_CHECKS:
@@ -144,7 +144,7 @@ for failed in executor.failed_checks:
 
 ---
 
-### `jwtcheck.core.checks.static`
+### `tokenprobe.core.checks.static`
 
 **Purpose:** P0 static security checks (offline).
 
@@ -164,7 +164,7 @@ for failed in executor.failed_checks:
 
 **Usage:**
 ```python
-from jwtcheck.core.checks.static import STATIC_CHECKS, AlgNoneCheck
+from tokenprobe.core.checks.static import STATIC_CHECKS, AlgNoneCheck
 
 check = AlgNoneCheck()
 findings = check.run(decoded_token)
@@ -176,7 +176,7 @@ for finding in findings:
 
 ---
 
-### `jwtcheck.core.checks.active`
+### `tokenprobe.core.checks.active`
 
 **Purpose:** P1 active security checks (network required).
 
@@ -194,7 +194,7 @@ for finding in findings:
 
 **Usage:**
 ```python
-from jwtcheck.core.checks.active import ACTIVE_CHECKS, WeakSecretBruteforceCheck
+from tokenprobe.core.checks.active import ACTIVE_CHECKS, WeakSecretBruteforceCheck
 
 check = WeakSecretBruteforceCheck()
 findings = check.run(decoded_token)
@@ -205,7 +205,152 @@ findings = check.run(decoded_token, target="https://api.example.com")
 
 ---
 
-### `jwtcheck.core.wordlist`
+### `tokenprobe.core.jwe_decoder`
+
+**Purpose:** Decode and analyze JWE (encrypted JWT) tokens without decrypting the payload.
+
+**Key Classes:**
+- `JWEDecodedToken` — Immutable representation of decoded JWE
+- `JWEDecodeError` — Exception for JWE decode failures
+
+**Key Functions:**
+- `decode_jwe_token(token: str) -> JWEDecodedToken` — Decode JWE into components
+
+**Security Features:**
+- No CEK (Content Encryption Key) decryption
+- Header-only parsing (payload remains encrypted)
+- 5-part structure validation
+- Robust error handling for malformed JWE tokens
+
+**Usage:**
+```python
+from tokenprobe.core.jwe_decoder import decode_jwe_token
+
+jwe = decode_jwe_token("eyJhbGci...")
+print(jwe.algorithm)  # "RSA-OAEP"
+print(jwe.encryption_method)  # "A256GCM"
+```
+
+---
+
+### `tokenprobe.core.unified_decoder`
+
+**Purpose:** Auto-detect token type (JWT vs JWE) and route to the correct decoder.
+
+**Key Functions:**
+- `decode_token(token: str) -> DecodedToken | JWEDecodedToken` — Auto-detect and decode
+
+**Detection Logic:**
+- 3-part structure → route to JWT decoder
+- 5-part structure → route to JWE decoder
+
+**Usage:**
+```python
+from tokenprobe.core.unified_decoder import decode_token
+
+result = decode_token("eyJhbGci...")
+if hasattr(result, 'encryption_method'):
+    print("JWE token detected")
+else:
+    print("JWT token detected")
+```
+
+---
+
+### `tokenprobe.core.config`
+
+**Purpose:** Load and validate TOML configuration files for custom claim requirements.
+
+**Key Classes:**
+- `CustomConfig` — Immutable config model
+- `ConfigError` — Exception for config failures
+
+**Key Functions:**
+- `load_config(path: str) -> CustomConfig` — Load TOML config from file
+- `validate_config(data: dict) -> CustomConfig` — Validate config dict
+
+**Config Schema:**
+```toml
+[claims]
+required = ["sub", "exp", "iat", "iss", "aud", "role"]
+
+[checks]
+disable = ["pii_in_payload"]
+
+[severity_overrides]
+missing_exp = "critical"
+
+[[custom_rules]]
+name = "valid_role"
+claim = "role"
+pattern = "^(admin|user|moderator)$"
+severity = "high"
+message = "Role must be admin, user, or moderator"
+```
+
+**Usage:**
+```python
+from tokenprobe.core.config import load_config
+
+config = load_config("tokenprobe.toml")
+print(config.required_claims)
+```
+
+---
+
+### `tokenprobe.core.batch`
+
+**Purpose:** Process multiple tokens from files with aggregated reporting.
+
+**Key Classes:**
+- `BatchResult` — Per-token analysis result
+- `BatchSummary` — Aggregated batch statistics
+
+**Key Functions:**
+- `load_tokens_from_file(path: str) -> list[str]` — Load tokens from text/JSON file
+- `run_batch_analysis(tokens: list[str], config=None) -> list[BatchResult]` — Analyze all tokens
+
+**Input Formats:**
+- Text file: one token per line, `#` for comments
+- JSON file: array of token strings
+
+**Usage:**
+```python
+from tokenprobe.core.batch import load_tokens_from_file, run_batch_analysis
+
+tokens = load_tokens_from_file("tokens.txt")
+results = run_batch_analysis(tokens)
+
+for result in results:
+    print(f"{result.token_index}: {len(result.findings)} findings")
+```
+
+---
+
+### `tokenprobe.core.checks.jwe`
+
+**Purpose:** P2 JWE-specific security checks (header validation for encrypted JWTs).
+
+**Checks Implemented:**
+1. `JweAlgNoneCheck` — Detects alg: none in JWE (CRITICAL)
+2. `JweWeakAlgorithmCheck` — Weak key encryption alg (RSA1_5, RSA_OAEP) (HIGH)
+3. `JweMissingEncryptionCheck` — Missing enc field (CRITICAL)
+4. `JweWeakEncryptionMethodCheck` — Weak content encryption (MEDIUM)
+
+**Key Constants:**
+- `JWE_CHECKS` — List of all JWE check instances
+
+**Usage:**
+```python
+from tokenprobe.core.checks.jwe import JWE_CHECKS, JweAlgNoneCheck
+
+check = JweAlgNoneCheck()
+findings = check.run(jwe_decoded_token)
+```
+
+---
+
+### `tokenprobe.core.wordlist`
 
 **Purpose:** Built-in weak secret wordlist.
 
@@ -220,7 +365,7 @@ findings = check.run(decoded_token, target="https://api.example.com")
 
 **Usage:**
 ```python
-from jwtcheck.core.wordlist import get_wordlist, wordlist_size
+from tokenprobe.core.wordlist import get_wordlist, wordlist_size
 
 secrets = get_wordlist()
 print(f"Testing {wordlist_size()} secrets")
@@ -230,7 +375,7 @@ print(f"Testing {wordlist_size()} secrets")
 
 ## Reporting Modules
 
-### `jwtcheck.report.text_report`
+### `tokenprobe.report.text_report`
 
 **Purpose:** Human-readable Rich terminal output.
 
@@ -247,7 +392,7 @@ print(f"Testing {wordlist_size()} secrets")
 **Usage:**
 ```python
 from rich.console import Console
-from jwtcheck.report.text_report import render_text_report
+from tokenprobe.report.text_report import render_text_report
 
 console = Console()
 render_text_report(report, console)
@@ -255,7 +400,7 @@ render_text_report(report, console)
 
 ---
 
-### `jwtcheck.report.json_report`
+### `tokenprobe.report.json_report`
 
 **Purpose:** Machine-readable JSON output.
 
@@ -292,7 +437,7 @@ render_text_report(report, console)
 
 **Usage:**
 ```python
-from jwtcheck.report.json_report import render_json_report
+from tokenprobe.report.json_report import render_json_report
 
 with open("report.json", "w") as f:
     render_json_report(report, file=f)
@@ -302,7 +447,7 @@ with open("report.json", "w") as f:
 
 ## Infrastructure Modules
 
-### `jwtcheck.logging_config`
+### `tokenprobe.logging_config`
 
 **Purpose:** Comprehensive logging infrastructure.
 
@@ -316,7 +461,7 @@ with open("report.json", "w") as f:
 - `get_logger(name) -> Logger` — Get child logger
 
 **Log Files:**
-- `logs/jwtcheck.log` — Full application log
+- `logs/tokenprobe.log` — Full application log
 - `logs/phases.log` — Phase tracking only
 - `logs/errors.log` — Errors only
 - `logs/tests/test_execution.log` — Test execution
@@ -324,7 +469,7 @@ with open("report.json", "w") as f:
 
 **Usage:**
 ```python
-from jwtcheck.logging_config import setup_logging, PhaseLogger
+from tokenprobe.logging_config import setup_logging, PhaseLogger
 
 setup_logging(verbose=True, log_to_file=True)
 
@@ -339,7 +484,7 @@ except Exception as e:
 
 ---
 
-### `jwtcheck.cli`
+### `tokenprobe.cli`
 
 **Purpose:** Command-line interface.
 
@@ -356,6 +501,9 @@ except Exception as e:
 - `--target` — Target endpoint URL
 - `--i-own-this-system` — Authorization confirmation
 - `--pubkey` — RSA public key PEM file
+- `--config` — TOML configuration file path
+- `--batch` — Batch mode: TOKEN is a file path
+- `--batch-output` — Save batch results to file
 
 **Exit Codes:**
 - `0` — No critical/high findings
@@ -365,23 +513,29 @@ except Exception as e:
 **Usage:**
 ```bash
 # Basic analysis
-jwtcheck eyJhbGci...
+tokenprobe eyJhbGci...
 
 # JSON output
-jwtcheck --json $TOKEN > report.json
+tokenprobe --json $TOKEN > report.json
 
 # Active checks
-jwtcheck --active --target https://api.example.com --i-own-this-system $TOKEN
+tokenprobe --active --target https://api.example.com --i-own-this-system $TOKEN
 
 # From stdin
-echo $TOKEN | jwtcheck
+echo $TOKEN | tokenprobe
+
+# Custom config
+tokenprobe --config tokenprobe.toml $TOKEN
+
+# Batch analysis
+tokenprobe --batch tokens.txt --batch-output results.json
 ```
 
 ---
 
 ## Test Modules
 
-### `jwtcheck.tests.test_logging`
+### `tokenprobe.tests.test_logging`
 
 **Purpose:** Test logging infrastructure.
 
@@ -395,7 +549,7 @@ echo $TOKEN | jwtcheck
 
 **Usage:**
 ```python
-from jwtcheck.tests.test_logging import get_result_logger
+from tokenprobe.tests.test_logging import get_result_logger
 
 logger = get_result_logger()
 logger.log_test_start("test_name", "module_name")

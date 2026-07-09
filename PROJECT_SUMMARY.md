@@ -98,7 +98,7 @@ safe_value = sanitize_for_logging(token, max_length=50)
 **Safety Gates:**
 ```bash
 # Active checks require explicit authorization
-jwtcheck --active --target <url> --i-own-this-system <token>
+tokenprobe --active --target <url> --i-own-this-system <token>
 ```
 
 ---
@@ -255,7 +255,7 @@ message = "Role must be admin, user, or moderator"
 
 **Usage:**
 ```bash
-jwtcheck --config tokenprobe.toml <token>
+tokenprobe --config tokenprobe.toml <token>
 ```
 
 **Features:**
@@ -271,13 +271,13 @@ Process multiple tokens from files:
 
 ```bash
 # Text file (one token per line)
-jwtcheck --batch tokens.txt
+tokenprobe --batch tokens.txt
 
 # JSON file (array of tokens)
-jwtcheck --batch tokens.json
+tokenprobe --batch tokens.json
 
 # Save results
-jwtcheck --batch tokens.txt --batch-output results.json
+tokenprobe --batch tokens.txt --batch-output results.json
 ```
 
 **Features:**
@@ -293,7 +293,7 @@ jwtcheck --batch tokens.txt --batch-output results.json
 Analyze encrypted JWT tokens:
 
 ```bash
-jwtcheck <jwe_token>
+tokenprobe <jwe_token>
 ```
 
 **JWE Token Structure:** `header.encrypted_key.iv.ciphertext.tag`
@@ -493,9 +493,9 @@ Not a demo or prototype — production-ready with real-world use cases.
 
 **Usage:**
 ```bash
-jwtcheck <token>
-jwtcheck --json <token> > report.json
-jwtcheck --active --target <url> --i-own-this-system <token>
+tokenprobe <token>
+tokenprobe --json <token> > report.json
+tokenprobe --active --target <url> --i-own-this-system <token>
 ```
 
 **Development:**

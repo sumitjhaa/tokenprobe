@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "jwtcheck"
+name = "tokenprobe"
 version = "1.0.0"
-description = "JWT Misconfiguration Checker - Audit JWT tokens for security issues"
+description = "TokenProbe - Audit JWT tokens for security misconfigurations"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
@@ -40,18 +40,18 @@ dev = [
 ]
 
 [project.scripts]
-jwtcheck = "jwtcheck.cli:main"
+tokenprobe = "tokenprobe.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/jwtcheck/jwtcheck"
-Repository = "https://github.com/jwtcheck/jwtcheck"
-Issues = "https://github.com/jwtcheck/jwtcheck/issues"
+Homepage = "https://github.com/sumitjhaa/tokenprobe"
+Repository = "https://github.com/sumitjhaa/tokenprobe"
+Issues = "https://github.com/sumitjhaa/tokenprobe/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["jwtcheck"]
+packages = ["tokenprobe"]
 
 [tool.pytest.ini_options]
-testpaths = ["jwtcheck/tests"]
+testpaths = ["tokenprobe/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

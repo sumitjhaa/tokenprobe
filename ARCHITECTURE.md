@@ -2,7 +2,7 @@
 
 ## System Overview
 
-jwtcheck is a security auditing tool for JWT tokens, designed with a clean separation between decoding, checking, and reporting. The architecture prioritizes:
+tokenprobe is a security auditing tool for JWT tokens, designed with a clean separation between decoding, checking, and reporting. The architecture prioritizes:
 
 1. **Safety** — No signature verification, no network calls in default mode
 2. **Extensibility** — Easy to add new checks via the registry pattern
@@ -25,17 +25,33 @@ jwtcheck is a security auditing tool for JWT tokens, designed with a clean separ
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                      Core Layer                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  decoder.py  │  │  findings.py │  │  checks/         │  │
-│  │              │  │              │  │  ├─ base.py      │  │
-│  │  - Split JWT │  │  - Finding   │  │  ├─ static.py    │  │
-│  │  - Base64url │  │  - Severity  │  │  └─ active.py    │  │
-│  │  - No verify │  │  - Report    │  │                  │  │
-│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+ │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐│
+│  │  decoder.py  │  │  findings.py │  │  checks/           ││
+│  │              │  │              │  │  ├─ base.py        ││
+│  │  - Split JWT │  │  - Finding   │  │  ├─ static.py      ││
+│  │  - Base64url │  │  - Severity  │  │  ├─ active.py      ││
+│  │  - No verify │  │  - Report    │  │  └─ jwe.py         ││
+│  └──────────────┘  └──────────────┘  └────────────────────┘│
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐  │
+│  │  jwe_decoder.py                                       │  │
+│  │  - JWE header decryption (no CEK)                    │  │
+│  │  - 5-part structure validation                       │  │
+│  ├──────────────────────────────────────────────────────┤  │
+│  │  unified_decoder.py                                   │  │
+│  │  - Auto-detect JWE vs JWT                            │  │
+│  │  - Route to correct decoder                          │  │
+│  ├──────────────────────────────────────────────────────┤  │
 │  │  wordlist.py                                          │  │
 │  │  - 50 common weak secrets                             │  │
+│  ├──────────────────────────────────────────────────────┤  │
+│  │  config.py                                            │  │
+│  │  - TOML config loading                               │  │
+│  │  - Custom claim rules & validation                   │  │
+│  ├──────────────────────────────────────────────────────┤  │
+│  │  batch.py                                             │  │
+│  │  - Multi-token processing                            │  │
+│  │  - Text & JSON file input                            │  │
 │  └──────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                             │
@@ -199,6 +215,75 @@ Ensures:
 - Consistent output ordering
 - CI-friendly exit codes
 
+### JWE Analysis (P2)
+
+```
+1. Token Input
+   │
+   ▼
+2. unified_decoder.py: Detect token type
+   │  - 5 parts → JWE
+   │  - 3 parts → JWT
+   │
+   ▼
+3. jwe_decoder.py: Decode JWE header
+   │  - Parse protected header
+   │  - Extract alg, enc, kid, etc.
+   │  - No CEK decryption (read-only)
+   │
+   ▼
+4. checks/jwe.py: Run JWE-specific checks
+   │  - JweAlgNoneCheck
+   │  - JweWeakAlgorithmCheck
+   │  - JweMissingEncryptionCheck
+   │  - JweWeakEncryptionMethodCheck
+   │
+   ▼
+5. Aggregate with static findings
+```
+
+### Batch Analysis (P2)
+
+```
+1. CLI: --batch flag + file path
+   │
+   ▼
+2. batch.py: Load tokens from file
+   │  - Text file (one per line, # comments)
+   │  - JSON file (array of strings)
+   │
+   ▼
+3. For each token:
+   │  Decode → Run checks → Collect findings
+   │
+   ▼
+4. Aggregate results across all tokens
+   │
+   ▼
+5. Output summary + per-token reports
+```
+
+### Custom Config Flow (P2)
+
+```
+1. CLI: --config flag + TOML file path
+   │
+   ▼
+2. config.py: Load and validate TOML
+   │  - Parse required claims
+   │  - Build custom validation rules
+   │  - Apply severity overrides
+   │
+   ▼
+3. Checks receive config context
+   │  - Required claim check (config-driven)
+   │  - Custom pattern rules executed
+   │  - Severity overrides applied post-check
+   │
+   ▼
+4. Findings reflect configured rules
+```
+
 ## Logging Architecture
 
 ### Phase Logging
@@ -223,27 +308,27 @@ ERROR | [decoder] DecodeError: Invalid JWT structure | context={'parts_count': 1
 
 ### Log Files
 
-- `logs/jwtcheck.log` — Full application log (DEBUG)
+- `logs/tokenprobe.log` — Full application log (DEBUG)
 - `logs/phases.log` — Phase tracking only (PHASE_START/END)
 - `logs/errors.log` — Errors only (ERROR+)
 
 ## Security Considerations
 
-### What jwtcheck Does NOT Do
+### What tokenprobe Does NOT Do
 
 1. **Signature Verification** — Never verifies signatures. Decoding is display-only.
 2. **Token Generation** — Read-only analysis, no token creation.
 3. **Network Calls (P0)** — Static checks are fully offline.
 4. **Secret Storage** — Does not store or transmit tokens/secrets.
 
-### What jwtcheck DOES Do
+### What tokenprobe DOES Do
 
 1. **Decode Without Verify** — Uses `options={"verify_signature": False}` explicitly.
 2. **Safety Gates** — Active checks require explicit opt-in with three flags.
 3. **Audit Trail** — All checks logged with timestamps and context.
 4. **Read-Only Probes** — Active checks never mutate target state.
 
-## Extending jwtcheck
+## Extending tokenprobe
 
 ### Adding a New Static Check
 
@@ -307,7 +392,7 @@ Same pattern, but in `checks/active.py` and `ACTIVE_CHECK_REGISTRY`.
 ```bash
 pytest                    # Run all tests
 pytest -v                 # Verbose output
-pytest --cov=jwtcheck     # With coverage report
+pytest --cov=tokenprobe     # With coverage report
 ```
 
 ## Performance Characteristics
@@ -319,8 +404,6 @@ pytest --cov=jwtcheck     # With coverage report
 
 ## Future Enhancements
 
-- [ ] Batch token analysis (file input)
-- [ ] Custom claim requirements (config file)
-- [ ] JWE (encrypted JWT) support
-- [ ] GitHub Action wrapper
 - [ ] Plugin system for third-party checks
+- [ ] Performance profiling and optimization
+- [ ] Additional weak secret wordlists

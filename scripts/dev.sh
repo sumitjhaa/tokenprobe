@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Development workflow script for jwtcheck
+# Development workflow script for tokenprobe
 # Provides common development tasks
 
 set -euo pipefail
@@ -46,23 +46,23 @@ run_test_verbose() {
 
 run_test_cov() {
     echo -e "${BLUE}Running tests with coverage...${NC}"
-    pytest --cov=jwtcheck --cov-report=term-missing --cov-report=html
+    pytest --cov=tokenprobe --cov-report=term-missing --cov-report=html
     echo -e "${GREEN}Coverage report: htmlcov/index.html${NC}"
 }
 
 run_lint() {
     echo -e "${BLUE}Running linter...${NC}"
-    ruff check jwtcheck/
+    ruff check tokenprobe/
 }
 
 run_lint_fix() {
     echo -e "${BLUE}Auto-fixing linting issues...${NC}"
-    ruff check --fix jwtcheck/
+    ruff check --fix tokenprobe/
 }
 
 run_format() {
     echo -e "${BLUE}Formatting code...${NC}"
-    ruff format jwtcheck/
+    ruff format tokenprobe/
 }
 
 run_check() {
@@ -85,16 +85,16 @@ run_demo() {
     echo -e "${BLUE}Running demo...${NC}"
     echo ""
     echo "1. Clean token (gold standard):"
-    python3 -c "from jwtcheck.tests.fixtures.tokens import GOLD_STANDARD_TOKEN; print(GOLD_STANDARD_TOKEN)" | \
-        xargs jwtcheck --no-log-file 2>&1 | head -20
+    python3 -c "from tokenprobe.tests.fixtures.tokens import GOLD_STANDARD_TOKEN; print(GOLD_STANDARD_TOKEN)" | \
+        xargs tokenprobe --no-log-file 2>&1 | head -20
     echo ""
     echo "2. Token with alg: none (Critical):"
-    python3 -c "from jwtcheck.tests.fixtures.tokens import ALG_NONE_TOKEN; print(ALG_NONE_TOKEN)" | \
-        xargs jwtcheck --no-log-file 2>&1 | head -20
+    python3 -c "from tokenprobe.tests.fixtures.tokens import ALG_NONE_TOKEN; print(ALG_NONE_TOKEN)" | \
+        xargs tokenprobe --no-log-file 2>&1 | head -20
     echo ""
     echo "3. JSON output:"
-    python3 -c "from jwtcheck.tests.fixtures.tokens import ALG_NONE_TOKEN; print(ALG_NONE_TOKEN)" | \
-        xargs jwtcheck --json --no-log-file 2>&1 | grep -v "^PHASE" | grep -v "^ERROR" | head -20
+    python3 -c "from tokenprobe.tests.fixtures.tokens import ALG_NONE_TOKEN; print(ALG_NONE_TOKEN)" | \
+        xargs tokenprobe --json --no-log-file 2>&1 | grep -v "^PHASE" | grep -v "^ERROR" | head -20
 }
 
 case "${1:-help}" in

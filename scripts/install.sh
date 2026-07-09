@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installation script for jwtcheck
+# Installation script for tokenprobe
 # Sets up the project in development mode
 
 set -euo pipefail
@@ -48,9 +48,9 @@ pip install --upgrade pip --quiet
 echo -e "${GREEN}✓ pip upgraded${NC}"
 echo ""
 
-echo "Step 5: Installing jwtcheck in development mode..."
+echo "Step 5: Installing tokenprobe in development mode..."
 pip install -e ".[dev]" --quiet
-echo -e "${GREEN}✓ jwtcheck installed${NC}"
+echo -e "${GREEN}✓ tokenprobe installed${NC}"
 echo ""
 
 echo "Step 6: Creating log directories..."
@@ -59,10 +59,10 @@ echo -e "${GREEN}✓ Log directories created${NC}"
 echo ""
 
 echo "Step 7: Verifying installation..."
-if jwtcheck --version &> /dev/null; then
-    echo -e "${GREEN}✓ jwtcheck command available${NC}"
+if tokenprobe --version &> /dev/null; then
+    echo -e "${GREEN}✓ tokenprobe command available${NC}"
 else
-    echo -e "${RED}✗ jwtcheck command not found${NC}"
+    echo -e "${RED}✗ tokenprobe command not found${NC}"
     exit 1
 fi
 echo ""
@@ -80,8 +80,8 @@ echo ""
 echo "To activate the virtual environment:"
 echo "  source venv/bin/activate"
 echo ""
-echo "To run jwtcheck:"
-echo "  jwtcheck <token>"
+echo "To run tokenprobe:"
+echo "  tokenprobe <token>"
 echo ""
 echo "To run tests:"
 echo "  pytest"

@@ -28,11 +28,11 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check jwtcheck/
+          ruff check tokenprobe/
 
       - name: Test with pytest
         run: |
-          pytest --cov=jwtcheck --cov-report=term-missing
+          pytest --cov=tokenprobe --cov-report=term-missing
 
   build:
     runs-on: ubuntu-latest

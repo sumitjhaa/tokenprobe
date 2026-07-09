@@ -36,8 +36,8 @@ echo ""
 echo "Running active checks..."
 echo ""
 
-# Run jwtcheck with active checks
-jwtcheck --active --target "$TARGET" --i-own-this-system "$TOKEN"
+# Run tokenprobe with active checks
+tokenprobe --active --target "$TARGET" --i-own-this-system "$TOKEN"
 
 EXIT_CODE=$?
 

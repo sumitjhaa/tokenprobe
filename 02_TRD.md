@@ -3,14 +3,14 @@
 ## 1. Tech Stack
 - **Language:** Python 3.11+ (fastest to ship, best JWT/crypto library support, easy pip distribution)
 - **Core libs:** `pyjwt` (decode without verify), `cryptography` (RSA key handling for alg-confusion check), `click` (CLI), `rich` (formatted terminal output)
-- **Packaging:** `pyproject.toml`, published to PyPI as `jwtcheck`
+- **Packaging:** `pyproject.toml`, published to PyPI as `tokenprobe`
 - **Testing:** `pytest`
 - **CI:** GitHub Actions (lint + test on push)
 
 ## 2. Architecture
 
 ```
-jwtcheck/
+tokenprobe/
 ├── core/
 │   ├── decoder.py       # splits + base64-decodes header/payload, no verification
 │   ├── checks/
@@ -75,7 +75,7 @@ Both require explicit `--active --target <url> --i-own-this-system` flags togeth
 
 ## 7. Non-Functional Requirements
 - No network calls in default mode (P0 fully offline) — privacy-safe to run on real tokens
-- Single-binary-feel install: `pip install jwtcheck`, zero config needed for P0
+- Single-binary-feel install: `pip install tokenprobe`, zero config needed for P0
 - Runtime under 1 second for P0 checks
 - No token content is logged or transmitted anywhere
 

@@ -1,6 +1,6 @@
-# Contributing to jwtcheck
+# Contributing to tokenprobe
 
-Thank you for your interest in contributing to jwtcheck! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to tokenprobe! This document provides guidelines and information for contributors.
 
 ## Code of Conduct
 
@@ -38,7 +38,7 @@ Please be respectful and constructive in all interactions. We're building a welc
 4. **Run tests and linting**:
    ```bash
    pytest
-   ruff check jwtcheck/
+   ruff check tokenprobe/
    ```
 5. **Commit with clear messages**:
    ```bash
@@ -60,41 +60,49 @@ Please be respectful and constructive in all interactions. We're building a welc
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/jwtcheck.git
-cd jwtcheck
+git clone https://github.com/YOUR_USERNAME/tokenprobe.git
+cd tokenprobe
 
 # Install in development mode
 pip install -e ".[dev]"
 
 # Verify installation
-jwtcheck --version
+tokenprobe --version
 pytest
 ```
 
 ### Project Structure
 
 ```
-jwtcheck/
+tokenprobe/
 ├── core/
 │   ├── decoder.py       # JWT decoding
+│   ├── jwe_decoder.py   # JWE (encrypted JWT) decoding
+│   ├── unified_decoder.py  # Auto-detect JWE/JWT
 │   ├── findings.py      # Data models
+│   ├── validation.py    # Input validation
+│   ├── wordlist.py      # Weak secrets wordlist
+│   ├── config.py        # TOML config loading
+│   ├── batch.py         # Batch analysis engine
 │   └── checks/
 │       ├── base.py      # Check protocol
+│       ├── engine.py    # CheckExecutor & CheckRegistry
 │       ├── static.py    # P0 static checks
-│       └── active.py    # P1 active checks
+│       ├── active.py    # P1 active checks
+│       └── jwe.py       # P2 JWE checks
 ├── report/
 │   ├── text_report.py   # Rich output
 │   └── json_report.py   # JSON output
 ├── logging_config.py    # Logging infrastructure
 ├── cli.py               # CLI entry point
-└── tests/               # Test suite
+└── tests/               # Test suite (219 tests)
 ```
 
 ## Adding a New Check
 
 ### Static Check (P0)
 
-1. **Create the check class** in `jwtcheck/core/checks/static.py`:
+1. **Create the check class** in `tokenprobe/core/checks/static.py`:
 
 ```python
 class MyNewCheck:
@@ -137,7 +145,7 @@ class MyNewCheck:
 CHECK_REGISTRY.append(MyNewCheck())
 ```
 
-3. **Add tests** in `jwtcheck/tests/test_checks.py`:
+3. **Add tests** in `tokenprobe/tests/test_checks.py`:
 
 ```python
 class TestMyNewCheck:
@@ -153,7 +161,7 @@ class TestMyNewCheck:
         assert len(findings) == 0
 ```
 
-4. **Create a test fixture** in `jwtcheck/tests/fixtures/tokens.py`:
+4. **Create a test fixture** in `tokenprobe/tests/fixtures/tokens.py`:
 
 ```python
 MY_ISSUE_TOKEN = _make_token(
@@ -162,15 +170,55 @@ MY_ISSUE_TOKEN = _make_token(
 )
 ```
 
+### JWE Check (P2)
+
+Same pattern, but in `tokenprobe/core/checks/jwe.py` and `JWE_CHECKS`:
+
+```python
+class MyJweCheck:
+    @property
+    def metadata(self) -> CheckMetadata:
+        return CheckMetadata(
+            name="my_jwe_check",
+            description="Checks for ... in JWE header",
+            category="jwe",
+            severity_hint="medium",
+        )
+
+    def run(self, token: JWEDecodedToken) -> list[Finding]:
+        findings = []
+        # JWE checks inspect the protected header
+        if issue_in_header(token.header):
+            findings.append(Finding(...))
+        return findings
+```
+
+Register in `JWE_CHECKS` in `jwe.py`.
+
 ### Active Check (P1)
 
-Same pattern, but in `jwtcheck/core/checks/active.py` and `ACTIVE_CHECK_REGISTRY`.
+Same pattern, but in `tokenprobe/core/checks/active.py` and `ACTIVE_CHECK_REGISTRY`.
 
 **Important:** Active checks must:
 - Require explicit opt-in (safety gates)
 - Be read-only (no mutations)
 - Handle network errors gracefully
 - Log all operations
+
+### Config-Driven Check (P2)
+
+Custom checks can also be defined via TOML config (no code changes needed):
+
+```toml
+[[custom_rules]]
+name = "valid_role"
+claim = "role"
+pattern = "^(admin|user|moderator)$"
+severity = "high"
+message = "Role must be admin, user, or moderator"
+```
+
+See `examples/tokenprobe.toml` for a full example.
 
 ## Code Style
 
@@ -186,8 +234,8 @@ Same pattern, but in `jwtcheck/core/checks/active.py` and `ACTIVE_CHECK_REGISTRY
 Use `ruff` for linting:
 
 ```bash
-ruff check jwtcheck/
-ruff check --fix jwtcheck/  # Auto-fix issues
+ruff check tokenprobe/
+ruff check --fix tokenprobe/  # Auto-fix issues
 ```
 
 ### Documentation
@@ -209,10 +257,10 @@ pytest
 pytest -v
 
 # With coverage
-pytest --cov=jwtcheck
+pytest --cov=tokenprobe
 
 # Specific test file
-pytest jwtcheck/tests/test_checks.py
+pytest tokenprobe/tests/test_checks.py
 ```
 
 ### Test Coverage
@@ -233,7 +281,7 @@ pytest jwtcheck/tests/test_checks.py
 All checks should use the phase logger:
 
 ```python
-from jwtcheck.logging_config import PhaseLogger
+from tokenprobe.logging_config import PhaseLogger
 
 _phase = PhaseLogger("my_component")
 
@@ -252,7 +300,7 @@ def run(self, token):
 1. **Ensure all tests pass**:
    ```bash
    pytest
-   ruff check jwtcheck/
+   ruff check tokenprobe/
    ```
 
 2. **Update documentation**:
@@ -293,4 +341,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-Thank you for contributing to jwtcheck! 🛡️
+Thank you for contributing to tokenprobe! 🛡️

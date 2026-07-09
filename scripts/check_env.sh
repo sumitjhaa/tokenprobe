@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Environment check script for jwtcheck
+# Environment check script for tokenprobe
 # Verifies all dependencies and configuration are correct
 
 set -euo pipefail
@@ -60,8 +60,8 @@ check_command "pip3" "pip3"
 echo ""
 
 echo "Checking project structure..."
-check_directory "jwtcheck" "Source directory"
-check_directory "jwtcheck/tests" "Test directory"
+check_directory "tokenprobe" "Source directory"
+check_directory "tokenprobe/tests" "Test directory"
 check_directory "logs" "Log directory"
 echo ""
 
@@ -101,11 +101,11 @@ check_command "pytest" "pytest"
 check_command "ruff" "ruff"
 echo ""
 
-echo "Checking jwtcheck installation..."
-if command -v jwtcheck &> /dev/null; then
-    echo -e "${GREEN}✓${NC} jwtcheck installed: $(jwtcheck --version 2>&1 | head -1)"
+echo "Checking tokenprobe installation..."
+if command -v tokenprobe &> /dev/null; then
+    echo -e "${GREEN}✓${NC} tokenprobe installed: $(tokenprobe --version 2>&1 | head -1)"
 else
-    echo -e "${YELLOW}!${NC} jwtcheck not installed (run install.sh)"
+    echo -e "${YELLOW}!${NC} tokenprobe not installed (run install.sh)"
 fi
 echo ""
 

@@ -9,10 +9,10 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in jwtcheck itself (not the tool's findings, but the tool's code), please report it responsibly:
+If you discover a security vulnerability in tokenprobe itself (not the tool's findings, but the tool's code), please report it responsibly:
 
 1. **DO NOT** open a public GitHub issue
-2. Email: security@jwtcheck.example.com (replace with actual contact)
+2. Email: security@tokenprobe.example.com (replace with actual contact)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -25,7 +25,7 @@ We will acknowledge receipt within 48 hours and provide a timeline for the fix.
 
 ### 1. No Signature Verification
 
-jwtcheck **never** verifies JWT signatures. This is intentional:
+tokenprobe **never** verifies JWT signatures. This is intentional:
 
 - The tool audits token structure and claims, not cryptographic validity
 - Signature verification would require access to secrets/keys
@@ -50,14 +50,14 @@ Static analysis (P0 checks) makes **zero network calls**:
 Active checks (P1) probe live endpoints and require **all three flags**:
 
 ```bash
-jwtcheck --active --target <url> --i-own-this-system <token>
+tokenprobe --active --target <url> --i-own-this-system <token>
 ```
 
 This prevents accidental probing of unauthorized systems.
 
 ### 4. Read-Only Operations
 
-jwtcheck never mutates state:
+tokenprobe never mutates state:
 
 - Static checks: Pure analysis, no side effects
 - Active checks: Read-only probes (GET requests with Authorization header)
@@ -65,7 +65,7 @@ jwtcheck never mutates state:
 
 ### 5. No Data Retention
 
-jwtcheck does not:
+tokenprobe does not:
 
 - Store tokens or secrets
 - Transmit data to external services
@@ -131,7 +131,7 @@ Exit codes are designed for CI integration:
 **Recommendation:** Fail CI on exit code 1:
 ```yaml
 - name: Audit JWT
-  run: jwtcheck $JWT_TOKEN
+  run: tokenprobe $JWT_TOKEN
   # Fails if exit code != 0
 ```
 
@@ -156,15 +156,17 @@ JSON output is safe for automated processing:
 
 ## Threat Model
 
-### What jwtcheck Protects Against
+### What tokenprobe Protects Against
 
 1. **Misconfigured JWTs** — Detects common misconfigurations before deployment
 2. **Weak Secrets** — Identifies tokens signed with common weak secrets
 3. **Algorithm Confusion** — Probes for RS256→HS256 confusion vulnerabilities
-4. **Missing Claims** — Flags tokens missing critical security claims (exp, aud, iss)
-5. **PII Exposure** — Detects sensitive data in token payloads
+4. **JWE Weakness** — Detects weak encryption algorithms and methods in encrypted JWTs
+5. **Custom Policy Enforcement** — Validates tokens against enterprise claim requirements
+6. **Missing Claims** — Flags tokens missing critical security claims (exp, aud, iss)
+7. **PII Exposure** — Detects sensitive data in token payloads
 
-### What jwtcheck Does NOT Protect Against
+### What tokenprobe Does NOT Protect Against
 
 1. **Cryptographic Attacks** — Does not verify signatures or detect weak algorithms
 2. **Token Theft** — Does not prevent token interception or replay
@@ -175,13 +177,13 @@ JSON output is safe for automated processing:
 
 ### 1. Use in CI/CD
 
-Run jwtcheck on test tokens before deployment:
+Run tokenprobe on test tokens before deployment:
 
 ```yaml
 - name: Security Audit
   run: |
-    pip install jwtcheck
-    jwtcheck --json $TEST_JWT > audit.json
+    pip install tokenprobe
+    tokenprobe --json $TEST_JWT > audit.json
     if [ $? -ne 0 ]; then
       echo "Security issues detected!"
       exit 1
@@ -190,7 +192,7 @@ Run jwtcheck on test tokens before deployment:
 
 ### 2. Combine with Other Tools
 
-jwtcheck complements (not replaces) other security tools:
+tokenprobe complements (not replaces) other security tools:
 
 - **SAST** — Static analysis of JWT handling code
 - **DAST** — Dynamic testing of JWT endpoints
@@ -199,7 +201,7 @@ jwtcheck complements (not replaces) other security tools:
 
 ### 3. Regular Audits
 
-Run jwtcheck regularly:
+Run tokenprobe regularly:
 
 - After JWT library updates
 - After configuration changes
@@ -217,19 +219,19 @@ When using active checks:
 
 ### 5. Keep Updated
 
-Stay current with jwtcheck updates:
+Stay current with tokenprobe updates:
 
 - New checks for emerging misconfigurations
 - Security fixes for the tool itself
 - Updated wordlist for weak secrets
 
 ```bash
-pip install --upgrade jwtcheck
+pip install --upgrade tokenprobe
 ```
 
 ## Dependencies Security
 
-jwtcheck depends on:
+tokenprobe depends on:
 
 - **PyJWT** — JWT decoding (no verification)
 - **cryptography** — RSA key handling
@@ -245,23 +247,23 @@ All dependencies are:
 
 **Recommendation:** Keep dependencies updated:
 ```bash
-pip install --upgrade jwtcheck
+pip install --upgrade tokenprobe
 ```
 
 ## Compliance
 
-jwtcheck is designed to help with:
+tokenprobe is designed to help with:
 
 - **OWASP API Security Top 10** — API2:2023 Broken Authentication
 - **NIST SP 800-63B** — Digital Identity Guidelines
 - **SOC 2** — Security audit trail (logging)
 - **ISO 27001** — Information security controls
 
-**Note:** jwtcheck is a tool, not a compliance solution. Use it as part of a broader security program.
+**Note:** tokenprobe is a tool, not a compliance solution. Use it as part of a broader security program.
 
 ## Contact
 
-Security issues: security@jwtcheck.example.com  
+Security issues: security@tokenprobe.example.com  
 General questions: Open a GitHub issue
 
 ---
