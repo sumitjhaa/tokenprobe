@@ -9,8 +9,9 @@ Tests cover:
 
 import pytest
 
+from jwtcheck.core.checks.engine import CheckExecutor
 from jwtcheck.core.checks.static import (
-    CHECK_REGISTRY,
+    STATIC_CHECKS,
     AlgNoneCheck,
     LongLivedTokenCheck,
     MissingAudCheck,
@@ -19,7 +20,6 @@ from jwtcheck.core.checks.static import (
     MissingIssCheck,
     PiiInPayloadCheck,
     WeakAlgDeclaredCheck,
-    run_all_static_checks,
 )
 from jwtcheck.core.decoder import decode_token
 from jwtcheck.core.findings import Severity
@@ -264,7 +264,9 @@ class TestMultiIssueToken:
 
     def test_multi_issue_triggers_multiple_checks(self):
         token = decode_token(MULTI_ISSUE_TOKEN)
-        findings = run_all_static_checks(token)
+        executor = CheckExecutor(STATIC_CHECKS)
+        executor.execute_all(token)
+        findings = executor.all_findings
         check_names = {f.check for f in findings}
         assert "alg_none" in check_names
         assert "missing_exp" in check_names
@@ -275,29 +277,35 @@ class TestMultiIssueToken:
 
     def test_multi_issue_has_critical(self):
         token = decode_token(MULTI_ISSUE_TOKEN)
-        findings = run_all_static_checks(token)
+        executor = CheckExecutor(STATIC_CHECKS)
+        executor.execute_all(token)
+        findings = executor.all_findings
         critical = [f for f in findings if f.severity == Severity.CRITICAL]
         assert len(critical) >= 1
 
 
 class TestRunAllStaticChecks:
-    """Tests for the run_all_static_checks orchestrator."""
+    """Tests for the static check execution."""
 
     def test_gold_standard_minimal_findings(self):
         """Gold standard should have zero Critical/High/Medium findings."""
         token = decode_token(GOLD_STANDARD_TOKEN)
-        findings = run_all_static_checks(token)
+        executor = CheckExecutor(STATIC_CHECKS)
+        executor.execute_all(token)
+        findings = executor.all_findings
         severe = [f for f in findings if f.severity in (Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM)]
         assert len(severe) == 0
 
     def test_all_checks_registered(self):
-        """All 8 P0 checks should be in the registry."""
-        assert len(CHECK_REGISTRY) == 8
+        """All 8 P0 checks should be registered."""
+        assert len(STATIC_CHECKS) == 8
 
     def test_findings_sorted_by_severity(self):
-        """Findings from run_all should be sorted most severe first."""
+        """Findings should be sorted most severe first."""
         token = decode_token(MULTI_ISSUE_TOKEN)
-        findings = run_all_static_checks(token)
+        executor = CheckExecutor(STATIC_CHECKS)
+        executor.execute_all(token)
+        findings = executor.all_findings
         if len(findings) > 1:
             for i in range(len(findings) - 1):
                 assert findings[i].severity >= findings[i + 1].severity
@@ -306,16 +314,14 @@ class TestRunAllStaticChecks:
 class TestCheckMetadata:
     """Tests for check metadata completeness."""
 
-    @pytest.mark.parametrize("check", CHECK_REGISTRY)
+    @pytest.mark.parametrize("check", STATIC_CHECKS)
     def test_metadata_present(self, check):
         """Every check should have complete metadata."""
-        meta = check.metadata
-        assert meta.name
-        assert meta.description
-        assert meta.category
-        assert meta.severity_hint
+        assert check.name
+        assert check.description
+        assert check.category
 
-    @pytest.mark.parametrize("check", CHECK_REGISTRY)
+    @pytest.mark.parametrize("check", STATIC_CHECKS)
     def test_findings_have_remediation(self, check):
         """Every finding should include remediation guidance."""
         token = decode_token(GOLD_STANDARD_TOKEN)

@@ -10,11 +10,11 @@ Tests cover:
 import pytest
 
 from jwtcheck.core.checks.active import (
-    ACTIVE_CHECK_REGISTRY,
+    ACTIVE_CHECKS,
     AlgConfusionProbeCheck,
     WeakSecretBruteforceCheck,
-    run_all_active_checks,
 )
+from jwtcheck.core.checks.engine import CheckExecutor
 from jwtcheck.core.decoder import decode_token
 from jwtcheck.core.findings import Severity
 from jwtcheck.tests.fixtures.tokens import _make_token
@@ -129,31 +129,28 @@ class TestAlgConfusionProbeCheck:
     def test_metadata_present(self):
         """Check should have complete metadata."""
         check = AlgConfusionProbeCheck()
-        meta = check.metadata
-        assert meta.name == "alg_confusion_probe"
-        assert meta.description
-        assert meta.category == "active"
+        assert check.name == "alg_confusion_probe"
+        assert check.description
+        assert check.category == "active"
 
 
 class TestActiveCheckRegistry:
     """Tests for active check registry."""
 
     def test_all_checks_registered(self):
-        """Both active checks should be in the registry."""
-        assert len(ACTIVE_CHECK_REGISTRY) == 2
+        """Both active checks should be registered."""
+        assert len(ACTIVE_CHECKS) == 2
 
-    @pytest.mark.parametrize("check", ACTIVE_CHECK_REGISTRY)
+    @pytest.mark.parametrize("check", ACTIVE_CHECKS)
     def test_metadata_present(self, check):
         """Every check should have complete metadata."""
-        meta = check.metadata
-        assert meta.name
-        assert meta.description
-        assert meta.category
-        assert meta.severity_hint
+        assert check.name
+        assert check.description
+        assert check.category
 
 
 class TestRunAllActiveChecks:
-    """Tests for run_all_active_checks orchestrator."""
+    """Tests for active check execution."""
 
     def test_returns_findings_sorted_by_severity(self):
         """Findings should be sorted by severity."""
@@ -179,7 +176,9 @@ class TestRunAllActiveChecks:
         token_str = f"{header_b64}.{payload_b64}.{signature_b64}"
         token = decode_token(token_str)
 
-        findings = run_all_active_checks(token, target=None)
+        executor = CheckExecutor(ACTIVE_CHECKS)
+        executor.execute_all(token, target=None)
+        findings = executor.all_findings
         assert len(findings) >= 1
         if len(findings) > 1:
             for i in range(len(findings) - 1):

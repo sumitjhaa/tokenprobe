@@ -1,9 +1,8 @@
 """
-Static security checks for JWT misconfiguration detection (P0).
+Static security checks for JWT misconfiguration detection.
 
-All checks in this module are pure functions that analyze the decoded token
-without making any network calls. They detect common JWT misconfigurations
-like algorithm none, missing expiry, weak algorithms, and sensitive data exposure.
+All checks are pure functions with no side effects.
+Each check is isolated - errors in one don't affect others.
 """
 
 from __future__ import annotations
@@ -12,14 +11,14 @@ import re
 import time
 from typing import Any
 
-from jwtcheck.core.checks.base import CheckMetadata
+from jwtcheck.core.checks.engine import Check
 from jwtcheck.core.decoder import DecodedToken
 from jwtcheck.core.findings import CheckSource, Finding, Severity
 from jwtcheck.logging_config import PhaseLogger
 
 _phase = PhaseLogger("static_checks")
 
-LONG_LIVED_THRESHOLD = 86400  # 24 hours in seconds
+LONG_LIVED_THRESHOLD = 86400
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 PHONE_REGEX = re.compile(r"(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}")
@@ -27,11 +26,7 @@ SSN_REGEX = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
 
 def _check_value_for_pii(value: Any, path: str = "") -> list[tuple[str, str]]:
-    """
-    Recursively check a value for PII patterns.
-
-    Returns list of (path, pii_type) tuples.
-    """
+    """Recursively check a value for PII patterns."""
     findings = []
 
     if isinstance(value, str):
@@ -54,302 +49,264 @@ def _check_value_for_pii(value: Any, path: str = "") -> list[tuple[str, str]]:
 
 
 class AlgNoneCheck:
-    """Check for alg: none — allows tokens without signature verification."""
+    """Check for alg: none algorithm."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="alg_none",
-            description="Checks if algorithm is set to 'none', allowing unsigned tokens",
-            category="algorithm",
-            severity_hint="critical",
-        )
+    def name(self) -> str:
+        return "alg_none"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("alg_none")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects tokens using 'alg: none' which bypasses signature verification"
 
+    @property
+    def category(self) -> str:
+        return "algorithm"
+
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         alg = token.algorithm
-        findings = []
-
         if alg and alg.lower() == "none":
-            findings.append(
+            return [
                 Finding(
-                    check="alg_none",
+                    check=self.name,
                     severity=Severity.CRITICAL,
                     message="Token uses 'alg: none' — signature verification is bypassed",
                     remediation=(
-                        "Reject tokens with 'alg: none'. Always enforce a specific algorithm "
-                        "in your JWT library configuration (e.g., algorithms=['RS256'])."
+                        "Reject tokens with 'alg: none'. Enforce a specific algorithm "
+                        "in your JWT library (e.g., algorithms=['RS256'])."
                     ),
                     source=CheckSource.STATIC,
                     details=f"Header algorithm: {alg}",
                 )
-            )
-
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("alg_none", len(findings), elapsed_ms)
-        return findings
+            ]
+        return []
 
 
 class MissingExpCheck:
-    """Check for missing exp (expiration) claim."""
+    """Check for missing exp claim."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="missing_exp",
-            description="Checks if the token has an expiration time",
-            category="claims",
-            severity_hint="high",
-        )
+    def name(self) -> str:
+        return "missing_exp"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("missing_exp")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects tokens without expiration time"
 
-        findings = []
+    @property
+    def category(self) -> str:
+        return "claims"
 
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         if "exp" not in token.payload:
-            findings.append(
+            return [
                 Finding(
-                    check="missing_exp",
+                    check=self.name,
                     severity=Severity.HIGH,
                     message="Token has no expiration time (exp claim missing)",
                     remediation=(
-                        "Always set an expiration time (exp claim) to limit token validity. "
-                        "Recommended: 15-60 minutes for access tokens, 7-30 days for refresh tokens."
+                        "Set an expiration time (exp claim). "
+                        "Recommended: 15-60 minutes for access tokens."
                     ),
                     source=CheckSource.STATIC,
                 )
-            )
-
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("missing_exp", len(findings), elapsed_ms)
-        return findings
+            ]
+        return []
 
 
 class LongLivedTokenCheck:
-    """Check for tokens with excessively long validity periods."""
+    """Check for excessively long token validity."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="long_lived_token",
-            description="Checks if token validity period exceeds 24 hours",
-            category="claims",
-            severity_hint="medium",
-        )
+    def name(self) -> str:
+        return "long_lived_token"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("long_lived_token")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects tokens with validity period exceeding 24 hours"
 
-        findings = []
-        payload = token.payload
+    @property
+    def category(self) -> str:
+        return "claims"
 
-        exp = payload.get("exp")
-        iat = payload.get("iat")
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
+        exp = token.payload.get("exp")
+        iat = token.payload.get("iat")
 
         if exp is not None and iat is not None:
             try:
-                exp_int = int(exp)
-                iat_int = int(iat)
-                validity_period = exp_int - iat_int
-
-                if validity_period > LONG_LIVED_THRESHOLD:
-                    hours = validity_period / 3600
-                    findings.append(
+                validity = int(exp) - int(iat)
+                if validity > LONG_LIVED_THRESHOLD:
+                    hours = validity / 3600
+                    return [
                         Finding(
-                            check="long_lived_token",
+                            check=self.name,
                             severity=Severity.MEDIUM,
-                            message=f"Token has long validity period: {hours:.1f} hours (>{LONG_LIVED_THRESHOLD // 3600}h)",
+                            message=f"Token validity: {hours:.1f} hours (>{LONG_LIVED_THRESHOLD // 3600}h)",
                             remediation=(
                                 "Reduce token lifetime. Access tokens should be short-lived (15-60 min). "
                                 "Use refresh tokens for longer sessions."
                             ),
                             source=CheckSource.STATIC,
-                            details=f"Validity: {validity_period}s ({hours:.1f}h)",
+                            details=f"Validity: {validity}s ({hours:.1f}h)",
                         )
-                    )
+                    ]
             except (ValueError, TypeError):
                 pass
 
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("long_lived_token", len(findings), elapsed_ms)
-        return findings
+        return []
 
 
 class MissingIatCheck:
-    """Check for missing iat (issued at) claim."""
+    """Check for missing iat claim."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="missing_iat",
-            description="Checks if the token has an issued-at timestamp",
-            category="claims",
-            severity_hint="low",
-        )
+    def name(self) -> str:
+        return "missing_iat"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("missing_iat")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects tokens without issued-at timestamp"
 
-        findings = []
+    @property
+    def category(self) -> str:
+        return "claims"
 
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         if "iat" not in token.payload:
-            findings.append(
+            return [
                 Finding(
-                    check="missing_iat",
+                    check=self.name,
                     severity=Severity.LOW,
                     message="Token has no issued-at time (iat claim missing)",
                     remediation=(
-                        "Include an iat (issued at) claim to track when tokens were created. "
-                        "Useful for token rotation and revocation strategies."
+                        "Include an iat claim to track token creation time. "
+                        "Useful for rotation and revocation strategies."
                     ),
                     source=CheckSource.STATIC,
                 )
-            )
-
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("missing_iat", len(findings), elapsed_ms)
-        return findings
+            ]
+        return []
 
 
 class MissingAudCheck:
-    """Check for missing aud (audience) claim."""
+    """Check for missing aud claim."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="missing_aud",
-            description="Checks if the token specifies intended audience",
-            category="claims",
-            severity_hint="medium",
-        )
+    def name(self) -> str:
+        return "missing_aud"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("missing_aud")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects tokens without audience restriction"
 
-        findings = []
+    @property
+    def category(self) -> str:
+        return "claims"
 
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         if "aud" not in token.payload:
-            findings.append(
+            return [
                 Finding(
-                    check="missing_aud",
+                    check=self.name,
                     severity=Severity.MEDIUM,
                     message="Token has no audience claim (aud missing)",
                     remediation=(
-                        "Include an aud (audience) claim to restrict which services can accept the token. "
-                        "Prevents token misuse across different services."
+                        "Include an aud claim to restrict which services accept the token. "
+                        "Prevents token misuse across services."
                     ),
                     source=CheckSource.STATIC,
                 )
-            )
-
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("missing_aud", len(findings), elapsed_ms)
-        return findings
+            ]
+        return []
 
 
 class MissingIssCheck:
-    """Check for missing iss (issuer) claim."""
+    """Check for missing iss claim."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="missing_iss",
-            description="Checks if the token specifies its issuer",
-            category="claims",
-            severity_hint="medium",
-        )
+    def name(self) -> str:
+        return "missing_iss"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("missing_iss")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects tokens without issuer identification"
 
-        findings = []
+    @property
+    def category(self) -> str:
+        return "claims"
 
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         if "iss" not in token.payload:
-            findings.append(
+            return [
                 Finding(
-                    check="missing_iss",
+                    check=self.name,
                     severity=Severity.MEDIUM,
                     message="Token has no issuer claim (iss missing)",
                     remediation=(
-                        "Include an iss (issuer) claim to identify who created the token. "
-                        "Helps services verify the token came from a trusted source."
+                        "Include an iss claim to identify the token creator. "
+                        "Helps verify the token came from a trusted source."
                     ),
                     source=CheckSource.STATIC,
                 )
-            )
-
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("missing_iss", len(findings), elapsed_ms)
-        return findings
+            ]
+        return []
 
 
 class PiiInPayloadCheck:
-    """Check for personally identifiable information in the payload."""
+    """Check for PII in token payload."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="pii_in_payload",
-            description="Checks for email, phone, SSN, or other PII in token claims",
-            category="privacy",
-            severity_hint="info",
-        )
+    def name(self) -> str:
+        return "pii_in_payload"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("pii_in_payload")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects personally identifiable information in token claims"
 
-        findings = []
+    @property
+    def category(self) -> str:
+        return "privacy"
+
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         pii_found = _check_value_for_pii(token.payload)
 
         if pii_found:
             pii_types = sorted(set(pii_type for _, pii_type in pii_found))
             pii_details = ", ".join(f"{path} ({pii_type})" for path, pii_type in pii_found)
 
-            findings.append(
+            return [
                 Finding(
-                    check="pii_in_payload",
+                    check=self.name,
                     severity=Severity.INFO,
-                    message=f"Potential PII detected in payload: {', '.join(pii_types)}",
+                    message=f"Potential PII detected: {', '.join(pii_types)}",
                     remediation=(
-                        "Avoid storing PII in JWT tokens. Tokens are often logged or cached. "
-                        "Use opaque identifiers and fetch PII from a secure backend service."
+                        "Avoid storing PII in JWT tokens. Use opaque identifiers "
+                        "and fetch PII from a secure backend service."
                     ),
                     source=CheckSource.STATIC,
-                    details=f"PII locations: {pii_details}",
+                    details=f"Locations: {pii_details}",
                 )
-            )
-
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("pii_in_payload", len(findings), elapsed_ms)
-        return findings
+            ]
+        return []
 
 
 class WeakAlgDeclaredCheck:
-    """Check for algorithm confusion setup (HS256 with x5c/jwk headers)."""
+    """Check for algorithm confusion setup."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="weak_alg_declared",
-            description="Checks for algorithm confusion vulnerability setup",
-            category="algorithm",
-            severity_hint="high",
-        )
+    def name(self) -> str:
+        return "weak_alg_declared"
 
-    def run(self, token: DecodedToken) -> list[Finding]:
-        _phase.check_start("weak_alg_declared")
-        start_time = time.time()
+    @property
+    def description(self) -> str:
+        return "Detects algorithm confusion vulnerability setup"
 
-        findings = []
+    @property
+    def category(self) -> str:
+        return "algorithm"
+
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         alg = token.algorithm
         header = token.header
 
@@ -359,27 +316,24 @@ class WeakAlgDeclaredCheck:
 
             if has_x5c or has_jwk:
                 key_type = "x5c" if has_x5c else "jwk"
-                findings.append(
+                return [
                     Finding(
-                        check="weak_alg_declared",
+                        check=self.name,
                         severity=Severity.HIGH,
-                        message=f"Algorithm confusion risk: HS256 with {key_type} header present",
+                        message=f"Algorithm confusion risk: HS256 with {key_type} header",
                         remediation=(
-                            "Remove x5c/jwk headers when using HS256. These headers are meant for "
-                            "asymmetric algorithms (RS256/ES256). Their presence with HS256 may indicate "
-                            "an algorithm confusion attack setup."
+                            "Remove x5c/jwk headers when using HS256. "
+                            "These are for asymmetric algorithms (RS256/ES256)."
                         ),
                         source=CheckSource.STATIC,
-                        details=f"Header contains {key_type} with HS256 algorithm",
+                        details=f"Header contains {key_type} with HS256",
                     )
-                )
+                ]
 
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("weak_alg_declared", len(findings), elapsed_ms)
-        return findings
+        return []
 
 
-CHECK_REGISTRY: list = [
+STATIC_CHECKS: list[Check] = [
     AlgNoneCheck(),
     MissingExpCheck(),
     LongLivedTokenCheck(),
@@ -389,30 +343,3 @@ CHECK_REGISTRY: list = [
     PiiInPayloadCheck(),
     WeakAlgDeclaredCheck(),
 ]
-
-
-def run_all_static_checks(token: DecodedToken) -> list[Finding]:
-    """
-    Run all registered static checks against a decoded token.
-
-    Args:
-        token: The decoded JWT token to analyze.
-
-    Returns:
-        Combined list of all findings from all checks.
-    """
-    _phase.start("Running all static checks", checks_count=len(CHECK_REGISTRY))
-
-    all_findings = []
-    for check in CHECK_REGISTRY:
-        try:
-            findings = check.run(token)
-            all_findings.extend(findings)
-        except Exception as e:
-            from jwtcheck.logging_config import ErrorLogger
-            error_logger = ErrorLogger("static_checks")
-            error_logger.capture(e, context={"check": check.metadata.name})
-
-    _phase.end("Static checks complete", success=True, total_findings=len(all_findings))
-    all_findings.sort(key=lambda f: f.severity.weight, reverse=True)
-    return all_findings

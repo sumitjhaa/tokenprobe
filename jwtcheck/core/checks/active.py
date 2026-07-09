@@ -1,11 +1,8 @@
 """
-Active security checks for JWT misconfiguration detection (P1).
+Active security checks for JWT misconfiguration detection.
 
 These checks require network access and probe a live endpoint.
-They must be explicitly enabled with --active --target --i-own-this-system flags.
-
-WARNING: These checks send requests to the target endpoint. Only use on
-systems you own or have explicit permission to test.
+Must be explicitly enabled with safety gates.
 """
 
 from __future__ import annotations
@@ -15,10 +12,11 @@ import hashlib
 import hmac
 import json
 import time
+from typing import Any
 
 import requests
 
-from jwtcheck.core.checks.base import CheckMetadata
+from jwtcheck.core.checks.engine import Check
 from jwtcheck.core.decoder import DecodedToken
 from jwtcheck.core.findings import CheckSource, Finding, Severity
 from jwtcheck.core.wordlist import get_wordlist
@@ -34,59 +32,31 @@ def _base64url_encode(data: bytes) -> str:
 
 
 def _create_hs256_signature(header_b64: str, payload_b64: str, secret: str) -> str:
-    """
-    Create an HS256 signature for the given header and payload.
-
-    Args:
-        header_b64: Base64url-encoded header.
-        payload_b64: Base64url-encoded payload.
-        secret: The HMAC secret.
-
-    Returns:
-        Base64url-encoded signature.
-    """
+    """Create an HS256 signature."""
     signing_input = f"{header_b64}.{payload_b64}".encode()
     signature = hmac.new(secret.encode(), signing_input, hashlib.sha256).digest()
     return _base64url_encode(signature)
 
 
 class WeakSecretBruteforceCheck:
-    """
-    Check if the JWT is signed with a weak secret from the common wordlist.
-
-    This check re-signs the token's header+payload with each wordlist entry
-    and compares the signature to the token's actual signature.
-    """
+    """Check if JWT is signed with a weak secret."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="weak_secret_bruteforce",
-            description="Brute-forces HS256 secret against common wordlist",
-            category="active",
-            severity_hint="critical",
-        )
+    def name(self) -> str:
+        return "weak_secret_bruteforce"
 
-    def run(self, token: DecodedToken, **kwargs) -> list[Finding]:
-        """
-        Run the weak secret brute force check.
+    @property
+    def description(self) -> str:
+        return "Brute-forces HS256 secret against common wordlist"
 
-        Args:
-            token: The decoded JWT token.
-            **kwargs: Ignored (for compatibility).
+    @property
+    def category(self) -> str:
+        return "active"
 
-        Returns:
-            List of findings (Critical if weak secret found).
-        """
-        _phase.check_start("weak_secret_bruteforce")
-        start_time = time.time()
-
-        findings = []
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
         alg = token.algorithm
-
         if not alg or alg.upper() != "HS256":
-            _phase.check_end("weak_secret_bruteforce", 0, 0)
-            return findings
+            return []
 
         wordlist = get_wordlist()
         _phase.info("Testing wordlist", size=len(wordlist))
@@ -97,132 +67,80 @@ class WeakSecretBruteforceCheck:
             )
 
             if expected_sig == token.signature_b64:
-                findings.append(
+                return [
                     Finding(
-                        check="weak_secret_bruteforce",
+                        check=self.name,
                         severity=Severity.CRITICAL,
-                        message="JWT signed with weak secret found in common wordlist",
+                        message="JWT signed with weak secret from common wordlist",
                         remediation=(
-                            "Use a strong, randomly generated secret (minimum 256 bits / 32 bytes). "
+                            "Use a strong, randomly generated secret (min 256 bits). "
                             "Example: openssl rand -base64 32"
                         ),
                         source=CheckSource.ACTIVE,
-                        details=f"Secret matched: '{secret}' (length: {len(secret)})",
+                        details=f"Secret: '{secret}' (length: {len(secret)})",
                     )
-                )
-                _phase.info("Weak secret found", secret=secret)
-                break
+                ]
 
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("weak_secret_bruteforce", len(findings), elapsed_ms)
-        return findings
+        return []
 
 
 class AlgConfusionProbeCheck:
-    """
-    Probe for algorithm confusion vulnerability by re-signing token as HS256
-    using the server's RSA public key.
-
-    This check requires:
-    - target: The endpoint URL to probe
-    - pubkey_pem: The server's RSA public key in PEM format (optional, can fetch from JWKS)
-
-    WARNING: This sends a request to the target endpoint.
-    """
+    """Probe for algorithm confusion vulnerability."""
 
     @property
-    def metadata(self) -> CheckMetadata:
-        return CheckMetadata(
-            name="alg_confusion_probe",
-            description="Probes endpoint for algorithm confusion vulnerability",
-            category="active",
-            severity_hint="critical",
-        )
+    def name(self) -> str:
+        return "alg_confusion_probe"
 
-    def run(
-        self,
-        token: DecodedToken,
-        target: str | None = None,
-        pubkey_pem: str | None = None,
-        **kwargs,
-    ) -> list[Finding]:
-        """
-        Run the algorithm confusion probe.
+    @property
+    def description(self) -> str:
+        return "Probes endpoint for algorithm confusion vulnerability"
 
-        Args:
-            token: The decoded JWT token.
-            target: The endpoint URL to probe.
-            pubkey_pem: The server's RSA public key in PEM format.
-            **kwargs: Additional arguments (ignored).
+    @property
+    def category(self) -> str:
+        return "active"
 
-        Returns:
-            List of findings (Critical if endpoint accepts confused token).
-        """
-        _phase.check_start("alg_confusion_probe")
-        start_time = time.time()
-
-        findings = []
-
+    def run(self, token: DecodedToken, **context) -> list[Finding]:
+        target = context.get("target")
         if not target:
-            _error.warning("No target provided for alg_confusion_probe")
-            _phase.check_end("alg_confusion_probe", 0, 0)
-            return findings
+            return []
 
+        pubkey_pem = context.get("pubkey_pem")
         if not pubkey_pem:
-            _phase.info("No public key provided, attempting to fetch from JWKS")
             try:
                 pubkey_pem = self._fetch_public_key(target)
             except Exception as e:
                 _error.capture(e, context={"target": target})
-                _phase.check_end("alg_confusion_probe", 0, 0)
-                return findings
+                return []
 
         if not pubkey_pem:
-            _phase.info("Could not obtain public key")
-            _phase.check_end("alg_confusion_probe", 0, 0)
-            return findings
+            return []
 
         try:
             confused_token = self._create_confused_token(token, pubkey_pem)
-            accepted = self._probe_endpoint(target, confused_token)
-
-            if accepted:
-                findings.append(
+            if self._probe_endpoint(target, confused_token):
+                return [
                     Finding(
-                        check="alg_confusion_probe",
+                        check=self.name,
                         severity=Severity.CRITICAL,
                         message="Endpoint accepted algorithm-confused token (RS256→HS256)",
                         remediation=(
-                            "Enforce strict algorithm validation on the server. "
-                            "Explicitly specify allowed algorithms (e.g., algorithms=['RS256']) "
-                            "and reject tokens with unexpected algorithms."
+                            "Enforce strict algorithm validation. "
+                            "Explicitly specify allowed algorithms."
                         ),
                         source=CheckSource.ACTIVE,
                         details=f"Target: {target}",
                     )
-                )
-                _phase.info("Algorithm confusion vulnerability confirmed")
-
+                ]
         except Exception as e:
             _error.capture(e, context={"target": target})
 
-        elapsed_ms = (time.time() - start_time) * 1000
-        _phase.check_end("alg_confusion_probe", len(findings), elapsed_ms)
-        return findings
+        return []
 
     def _fetch_public_key(self, target: str) -> str | None:
-        """
-        Attempt to fetch the server's public key from JWKS endpoint.
-
-        Args:
-            target: The target endpoint URL.
-
-        Returns:
-            Public key in PEM format, or None if not found.
-        """
+        """Fetch public key from JWKS endpoint."""
         try:
-            import jwt
             from cryptography.hazmat.primitives import serialization
+            import jwt
 
             jwks_url = target.rstrip("/") + "/.well-known/jwks.json"
             response = requests.get(jwks_url, timeout=5)
@@ -248,18 +166,7 @@ class AlgConfusionProbeCheck:
             return None
 
     def _create_confused_token(self, token: DecodedToken, pubkey_pem: str) -> str:
-        """
-        Create a token with algorithm confusion (RS256→HS256).
-
-        Changes the algorithm to HS256 and signs with the RSA public key as the secret.
-
-        Args:
-            token: The original decoded token.
-            pubkey_pem: The RSA public key in PEM format.
-
-        Returns:
-            The confused token string.
-        """
+        """Create token with algorithm confusion."""
         confused_header = token.header.copy()
         confused_header["alg"] = "HS256"
 
@@ -271,63 +178,17 @@ class AlgConfusionProbeCheck:
         return f"{header_b64}.{payload_b64}.{signature}"
 
     def _probe_endpoint(self, target: str, token: str) -> bool:
-        """
-        Send the confused token to the target endpoint.
-
-        Args:
-            target: The endpoint URL.
-            token: The confused JWT token.
-
-        Returns:
-            True if the endpoint accepts the token (2xx response).
-        """
+        """Send confused token to target."""
         try:
             headers = {"Authorization": f"Bearer {token}"}
             response = requests.get(target, headers=headers, timeout=5)
-
             return 200 <= response.status_code < 300
-
         except Exception as e:
             _error.capture(e, context={"step": "probe_endpoint", "target": target})
             return False
 
 
-ACTIVE_CHECK_REGISTRY: list = [
+ACTIVE_CHECKS: list[Check] = [
     WeakSecretBruteforceCheck(),
     AlgConfusionProbeCheck(),
 ]
-
-
-def run_all_active_checks(
-    token: DecodedToken,
-    target: str | None = None,
-    pubkey_pem: str | None = None,
-) -> list[Finding]:
-    """
-    Run all registered active checks against a decoded token.
-
-    Args:
-        token: The decoded JWT token to analyze.
-        target: The target endpoint URL (required for some checks).
-        pubkey_pem: The server's public key in PEM format (optional).
-
-    Returns:
-        Combined list of all findings from all checks.
-    """
-    _phase.start(
-        "Running all active checks",
-        checks_count=len(ACTIVE_CHECK_REGISTRY),
-        target=target,
-    )
-
-    all_findings = []
-    for check in ACTIVE_CHECK_REGISTRY:
-        try:
-            findings = check.run(token, target=target, pubkey_pem=pubkey_pem)
-            all_findings.extend(findings)
-        except Exception as e:
-            _error.capture(e, context={"check": check.metadata.name})
-
-    _phase.end("Active checks complete", success=True, total_findings=len(all_findings))
-    all_findings.sort(key=lambda f: f.severity.weight, reverse=True)
-    return all_findings
