@@ -19,7 +19,6 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from jwtcheck.core.validation import ValidationError, validate_token_format
 from jwtcheck.logging_config import ErrorLogger, PhaseLogger
 
 _phase = PhaseLogger("jwe_decoder")

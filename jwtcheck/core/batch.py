@@ -19,8 +19,8 @@ from jwtcheck.core.config import (
     build_config_checks,
     filter_checks_by_config,
 )
-from jwtcheck.core.decoder import DecodeError, DecodedToken, decode_token
-from jwtcheck.core.findings import Finding, Report, Severity
+from jwtcheck.core.decoder import DecodeError, decode_token
+from jwtcheck.core.findings import Report
 from jwtcheck.logging_config import ErrorLogger, PhaseLogger
 
 _phase = PhaseLogger("batch")
@@ -131,7 +131,7 @@ def load_tokens_from_file(file_path: Path) -> list[str]:
 
     # Line-by-line parsing
     tokens = []
-    for line_num, line in enumerate(content.split("\n"), 1):
+    for _line_num, line in enumerate(content.split("\n"), 1):
         line = line.strip()
         if line and not line.startswith("#"):  # Skip empty lines and comments
             tokens.append(line)
@@ -244,7 +244,7 @@ def process_batch(
 
         try:
             report = process_token(token, active, target, pubkey_pem, config)
-            
+
             # Check if token structure was valid
             if report.token_valid_structure:
                 result.add_report(report, token_preview)

@@ -38,6 +38,13 @@ JWTs are the default auth token format across modern APIs, but they're commonly 
 - 🔒 Algorithm confusion probe (re-sign with public key)
 - 🔒 Safety gates: requires `--active --target --i-own-this-system`
 
+### Advanced Features (P2)
+
+- 📋 **Custom Claim Requirements** — Define required claims and validation rules via TOML config
+- 📦 **Batch Analysis** — Process multiple tokens from files (text or JSON)
+- 🔐 **JWE Support** — Analyze encrypted JWT tokens (header validation, algorithm checks)
+- 🤖 **GitHub Action** — Drop-in CI/CD integration with configurable severity thresholds
+
 ## Installation
 
 ```bash
@@ -151,9 +158,87 @@ jwtcheck --verbose $JWT_TOKEN
 
 Logs are written to `logs/jwtcheck.log`, `logs/phases.log`, and `logs/errors.log`.
 
+### Custom configuration
+
+```bash
+# Use a TOML config file for custom claim requirements
+jwtcheck --config tokenprobe.toml $JWT_TOKEN
+```
+
+Example `tokenprobe.toml`:
+
+```toml
+[claims]
+required = ["sub", "exp", "iat", "iss", "aud", "role"]
+
+[checks]
+disable = ["pii_in_payload"]
+
+[severity_overrides]
+missing_exp = "critical"
+
+[[custom_rules]]
+name = "valid_role"
+claim = "role"
+pattern = "^(admin|user|moderator)$"
+severity = "high"
+message = "Role must be admin, user, or moderator"
+```
+
+### Batch analysis
+
+```bash
+# Analyze multiple tokens from a text file (one per line)
+jwtcheck --batch tokens.txt
+
+# Analyze tokens from a JSON file
+jwtcheck --batch tokens.json
+
+# Save batch results to a file
+jwtcheck --batch tokens.txt --batch-output results.json
+```
+
+Example `tokens.txt`:
+
+```text
+# Comments are ignored
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U
+eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.fake
+```
+
+### JWE (encrypted JWT) analysis
+
+```bash
+# Analyze a JWE token (5-part structure)
+jwtcheck $JWE_TOKEN
+
+# JWE tokens are automatically detected and analyzed
+# Only header checks are performed (payload is encrypted)
+```
+
+JWE checks include:
+
+- Algorithm validation (detects weak algorithms like RSA1_5)
+- Encryption method validation
+- Missing required fields detection
+
 ## Usage in CI
 
-### GitHub Actions example
+### GitHub Action (recommended)
+
+```yaml
+- name: Audit JWT token
+  uses: sumitjhaa/tokenprobe@main
+  with:
+    token: ${{ secrets.TEST_JWT_TOKEN }}
+    output-format: json
+    output-file: audit-report.json
+    fail-on: high
+```
+
+See [examples/github-action-example.yml](examples/github-action-example.yml) for more examples.
+
+### Manual installation in CI
 
 ```yaml
 - name: Audit JWT token
@@ -190,16 +275,32 @@ Logs are written to `logs/jwtcheck.log`, `logs/phases.log`, and `logs/errors.log
 
 ### P1 — Active Checks (Opt-in, Requires Target)
 
-| Check                    | Severity | Description                                             |
-| ------------------------ | -------- | ------------------------------------------------------- |
-| `weak_secret_bruteforce` | Critical | HS256 secret found in common wordlist                   |
-| `alg_confusion_probe`    | Critical | Endpoint accepts HS256-signed token with RSA public key |
+| Check                    | Severity | Description                                              |
+| ------------------------ | -------- | -------------------------------------------------------- |
+| `weak_secret_bruteforce` | Critical | HS256 secret found in common wordlist                    |
+| `alg_confusion_probe`    | Critical | Endpoint accepts HS256-signed token with RSA public key  |
 
 **⚠️ Active checks require explicit opt-in:**
 
 ```bash
 jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
 ```
+
+### P2 — JWE Checks (Encrypted JWTs)
+
+| Check                         | Severity | Description                                     |
+| ----------------------------- | -------- | ----------------------------------------------- |
+| `jwe_alg_none`                | Critical | JWE uses `alg: none` — no key encryption        |
+| `jwe_weak_algorithm`          | High     | Weak key encryption algorithm (RSA1_5, RSA_OAEP)|
+| `jwe_missing_encryption`      | Critical | Missing `enc` (encryption method) field         |
+| `jwe_weak_encryption_method`  | Medium   | Weak content encryption (A128CBC-HS256)         |
+
+### P2 — Custom Checks (Config-driven)
+
+| Check                        | Severity | Description                                     |
+| ---------------------------- | -------- | ----------------------------------------------- |
+| `custom_required_claims`     | High     | Missing claims defined in config                |
+| `custom_rule_<name>`         | Variable | Custom pattern validation rules from config     |
 
 ## Python Library Usage
 
@@ -317,10 +418,13 @@ This tool is designed for **auditing systems you own or have explicit permission
 
 - [x] P0: Static analysis (offline)
 - [x] P1: Active checks (weak secret brute force, alg confusion)
-- [ ] P2: Custom claim requirements (config file)
-- [ ] P2: GitHub Action wrapper
-- [ ] P2: JWE (encrypted JWT) support
-- [ ] P2: Batch token analysis (file input)
+- [x] P2: Custom claim requirements (config file)
+- [x] P2: GitHub Action wrapper
+- [x] P2: JWE (encrypted JWT) support
+- [x] P2: Batch token analysis (file input)
+- [ ] P3: Web UI for interactive analysis
+- [ ] P3: VS Code extension
+- [ ] P3: Pre-commit hooks
 
 ## Contributing
 

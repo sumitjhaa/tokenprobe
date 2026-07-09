@@ -8,7 +8,6 @@ and encryption configuration.
 from __future__ import annotations
 
 from jwtcheck.core.checks.engine import Check
-from jwtcheck.core.decoder import DecodedToken
 from jwtcheck.core.findings import CheckSource, Finding, Severity
 from jwtcheck.core.jwe_decoder import DecodedJWE
 from jwtcheck.logging_config import PhaseLogger

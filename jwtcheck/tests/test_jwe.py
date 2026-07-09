@@ -25,7 +25,6 @@ from jwtcheck.tests.fixtures.jwe_tokens import (
     JWE_ALG_NONE,
     JWE_ECDH_ES,
     JWE_GOLD_STANDARD,
-    JWE_KNOWN_BAD,
     JWE_MISSING_ENC,
     JWE_MULTI_ISSUE,
     JWE_RSA_OAEP_256,

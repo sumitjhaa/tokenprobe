@@ -86,6 +86,93 @@ jwtcheck --verbose --log-dir ./logs --json <token>
 - `logs/phases.log` — Execution phases and timing
 - `logs/errors.log` — Error details with stack traces
 
+### Custom Configuration
+
+Use a TOML config file to define custom claim requirements and validation rules:
+
+```bash
+# Use config file
+jwtcheck --config tokenprobe.toml <token>
+```
+
+**Example config file (`tokenprobe.toml`):**
+
+```toml
+[claims]
+required = ["sub", "exp", "iat", "iss", "aud", "role"]
+
+[checks]
+disable = ["pii_in_payload"]
+
+[severity_overrides]
+missing_exp = "critical"
+missing_aud = "high"
+
+[[custom_rules]]
+name = "valid_role"
+claim = "role"
+pattern = "^(admin|user|moderator)$"
+severity = "high"
+message = "Role must be admin, user, or moderator"
+```
+
+See `examples/tokenprobe.toml` for a complete example.
+
+### Batch Analysis
+
+Process multiple tokens from files:
+
+```bash
+# Analyze tokens from text file (one per line)
+jwtcheck --batch tokens.txt
+
+# Analyze tokens from JSON file
+jwtcheck --batch tokens.json
+
+# Save batch results to file
+jwtcheck --batch tokens.txt --batch-output results.json
+
+# Batch with JSON output
+jwtcheck --batch tokens.txt --json > batch-report.json
+```
+
+**Text file format (`tokens.txt`):**
+
+```text
+# Comments are ignored
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U
+eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.fake
+```
+
+**JSON file format (`tokens.json`):**
+
+```json
+[
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.fake"
+]
+```
+
+See `examples/tokens.txt` and `examples/tokens.json` for examples.
+
+### JWE (Encrypted JWT) Analysis
+
+TokenProbe automatically detects and analyzes JWE tokens (5-part structure):
+
+```bash
+# Analyze a JWE token
+jwtcheck <jwe_token>
+```
+
+**JWE token structure:** `header.encrypted_key.iv.ciphertext.tag`
+
+**What's checked:**
+- Header algorithm validation (detects weak algorithms like RSA1_5)
+- Encryption method validation (enc field)
+- Missing required fields detection
+
+**Note:** Since the payload is encrypted, only header-level checks are performed.
+
 ### CLI Reference
 
 ```
@@ -100,6 +187,9 @@ Options:
   --target TEXT             Target endpoint URL
   --i-own-this-system       Confirm authorization
   --pubkey FILE             RSA public key PEM file
+  --config FILE             TOML configuration file
+  --batch                   Batch mode: TOKEN is a file path
+  --batch-output FILE       Save batch results to file
   --version                 Show version
   --help                    Show help message
 ```

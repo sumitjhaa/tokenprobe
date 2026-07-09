@@ -7,8 +7,6 @@ JWE (JSON Web Encryption): 5 parts (header.encrypted_key.iv.ciphertext.tag)
 
 from __future__ import annotations
 
-from typing import Union
-
 from jwtcheck.core.decoder import DecodedToken, DecodeError, decode_token
 from jwtcheck.core.jwe_decoder import DecodedJWE, JWEDecodeError, decode_jwe, is_jwe_token
 from jwtcheck.logging_config import PhaseLogger
@@ -17,7 +15,7 @@ _phase = PhaseLogger("unified_decoder")
 
 
 # Type alias for decoded tokens
-DecodedJWT = Union[DecodedToken, DecodedJWE]
+DecodedJWT = DecodedToken | DecodedJWE
 
 
 def decode_jwt(token: str) -> DecodedJWT:

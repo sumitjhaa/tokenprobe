@@ -6,7 +6,6 @@ Provides user-friendly CLI for analyzing JWT tokens.
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -16,8 +15,8 @@ from rich.console import Console
 from jwtcheck import __version__
 from jwtcheck.core.checks.active import ACTIVE_CHECKS
 from jwtcheck.core.checks.engine import CheckExecutor, CheckRegistry
-from jwtcheck.core.checks.static import STATIC_CHECKS
 from jwtcheck.core.checks.jwe import JWE_CHECKS
+from jwtcheck.core.checks.static import STATIC_CHECKS
 from jwtcheck.core.config import (
     TokenProbeConfig,
     apply_severity_overrides,
@@ -25,10 +24,10 @@ from jwtcheck.core.config import (
     filter_checks_by_config,
     load_config,
 )
-from jwtcheck.core.unified_decoder import decode_jwt, is_jwe
 from jwtcheck.core.decoder import DecodeError
-from jwtcheck.core.jwe_decoder import JWEDecodeError
 from jwtcheck.core.findings import Report
+from jwtcheck.core.jwe_decoder import JWEDecodeError
+from jwtcheck.core.unified_decoder import decode_jwt, is_jwe
 from jwtcheck.logging_config import PhaseLogger, setup_logging
 from jwtcheck.report.json_report import render_json_report
 from jwtcheck.report.text_report import render_text_report

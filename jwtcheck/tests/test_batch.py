@@ -27,8 +27,8 @@ from jwtcheck.core.findings import Severity
 from jwtcheck.tests.fixtures.tokens import (
     ALG_NONE_TOKEN,
     GOLD_STANDARD_TOKEN,
-    MISSING_EXP_TOKEN,
     MISSING_AUD_TOKEN,
+    MISSING_EXP_TOKEN,
 )
 
 
@@ -68,7 +68,7 @@ class TestBatchResult:
 
     def test_severity_summary(self):
         result = BatchResult()
-        from jwtcheck.core.findings import Report, Finding
+        from jwtcheck.core.findings import Finding, Report
         report = Report()
         report.add_finding(Finding("test1", Severity.CRITICAL, "msg", "fix"))
         report.add_finding(Finding("test2", Severity.HIGH, "msg", "fix"))
