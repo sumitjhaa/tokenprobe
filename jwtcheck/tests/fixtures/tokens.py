@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any
 
 
 def _b64encode(data: dict | bytes) -> str:

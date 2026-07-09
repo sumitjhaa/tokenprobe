@@ -121,6 +121,20 @@ jwtcheck --json $JWT_TOKEN > report.json
 echo $JWT_TOKEN | jwtcheck
 ```
 
+### Active checks (probe live endpoint)
+```bash
+# Weak secret brute force + algorithm confusion probe
+jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
+
+# With custom public key for algorithm confusion probe
+jwtcheck --active --target https://api.example.com/auth --pubkey ./server.pub --i-own-this-system $JWT_TOKEN
+```
+
+**⚠️ Active checks require all three flags:**
+- `--active` — Enable active checks
+- `--target <url>` — Target endpoint to probe
+- `--i-own-this-system` — Confirm authorization
+
 ### Verbose logging
 ```bash
 jwtcheck --verbose $JWT_TOKEN

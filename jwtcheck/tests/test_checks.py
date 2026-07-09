@@ -10,35 +10,35 @@ Tests cover:
 import pytest
 
 from jwtcheck.core.checks.static import (
+    CHECK_REGISTRY,
     AlgNoneCheck,
-    MissingExpCheck,
     LongLivedTokenCheck,
-    MissingIatCheck,
     MissingAudCheck,
+    MissingExpCheck,
+    MissingIatCheck,
     MissingIssCheck,
     PiiInPayloadCheck,
     WeakAlgDeclaredCheck,
     run_all_static_checks,
-    CHECK_REGISTRY,
 )
 from jwtcheck.core.decoder import decode_token
 from jwtcheck.core.findings import Severity
 from jwtcheck.tests.fixtures.tokens import (
+    ALG_CONFUSION_JWK_TOKEN,
+    ALG_CONFUSION_TOKEN,
+    ALG_NONE_CAPS_TOKEN,
     ALG_NONE_TOKEN,
     ALG_NONE_UPPER_TOKEN,
-    ALG_NONE_CAPS_TOKEN,
-    MISSING_EXP_TOKEN,
+    GOLD_STANDARD_TOKEN,
     LONG_LIVED_TOKEN,
-    VERY_LONG_LIVED_TOKEN,
-    MISSING_IAT_TOKEN,
     MISSING_AUD_TOKEN,
+    MISSING_EXP_TOKEN,
+    MISSING_IAT_TOKEN,
     MISSING_ISS_TOKEN,
-    PII_PAYLOAD_TOKEN,
-    ALG_CONFUSION_TOKEN,
-    ALG_CONFUSION_JWK_TOKEN,
     MULTI_ISSUE_TOKEN,
     NESTED_PII_TOKEN,
-    GOLD_STANDARD_TOKEN,
+    PII_PAYLOAD_TOKEN,
+    VERY_LONG_LIVED_TOKEN,
     _make_token,
 )
 

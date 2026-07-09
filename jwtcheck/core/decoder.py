@@ -11,7 +11,7 @@ from __future__ import annotations
 import base64
 import json
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from jwtcheck.logging_config import ErrorLogger, PhaseLogger
 
@@ -47,17 +47,17 @@ class DecodedToken:
     signature_b64: str
 
     @property
-    def algorithm(self) -> Optional[str]:
+    def algorithm(self) -> str | None:
         """Get the algorithm from the header, if present."""
         return self.header.get("alg")
 
     @property
-    def token_type(self) -> Optional[str]:
+    def token_type(self) -> str | None:
         """Get the token type (typ) from the header."""
         return self.header.get("typ")
 
     @property
-    def kid(self) -> Optional[str]:
+    def kid(self) -> str | None:
         """Get the Key ID from the header, if present."""
         return self.header.get("kid")
 

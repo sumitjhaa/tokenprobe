@@ -15,7 +15,6 @@ import hashlib
 import hmac
 import json
 import time
-from typing import Optional
 
 import requests
 
@@ -102,7 +101,7 @@ class WeakSecretBruteforceCheck:
                     Finding(
                         check="weak_secret_bruteforce",
                         severity=Severity.CRITICAL,
-                        message=f"JWT signed with weak secret found in common wordlist",
+                        message="JWT signed with weak secret found in common wordlist",
                         remediation=(
                             "Use a strong, randomly generated secret (minimum 256 bits / 32 bytes). "
                             "Example: openssl rand -base64 32"
@@ -143,8 +142,8 @@ class AlgConfusionProbeCheck:
     def run(
         self,
         token: DecodedToken,
-        target: Optional[str] = None,
-        pubkey_pem: Optional[str] = None,
+        target: str | None = None,
+        pubkey_pem: str | None = None,
         **kwargs,
     ) -> list[Finding]:
         """
@@ -211,7 +210,7 @@ class AlgConfusionProbeCheck:
         _phase.check_end("alg_confusion_probe", len(findings), elapsed_ms)
         return findings
 
-    def _fetch_public_key(self, target: str) -> Optional[str]:
+    def _fetch_public_key(self, target: str) -> str | None:
         """
         Attempt to fetch the server's public key from JWKS endpoint.
 
@@ -222,9 +221,8 @@ class AlgConfusionProbeCheck:
             Public key in PEM format, or None if not found.
         """
         try:
-            from cryptography.hazmat.primitives import serialization
-            from cryptography.hazmat.primitives.asymmetric import rsa
             import jwt
+            from cryptography.hazmat.primitives import serialization
 
             jwks_url = target.rstrip("/") + "/.well-known/jwks.json"
             response = requests.get(jwks_url, timeout=5)
@@ -302,8 +300,8 @@ ACTIVE_CHECK_REGISTRY: list = [
 
 def run_all_active_checks(
     token: DecodedToken,
-    target: Optional[str] = None,
-    pubkey_pem: Optional[str] = None,
+    target: str | None = None,
+    pubkey_pem: str | None = None,
 ) -> list[Finding]:
     """
     Run all registered active checks against a decoded token.

@@ -9,8 +9,6 @@ Tests cover:
 """
 
 import json
-import sys
-from io import StringIO
 
 import pytest
 from click.testing import CliRunner

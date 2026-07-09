@@ -10,7 +10,6 @@ Tests cover:
 import pytest
 
 from jwtcheck.core.findings import (
-    CheckSource,
     Finding,
     Report,
     Severity,

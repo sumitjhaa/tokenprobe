@@ -17,7 +17,6 @@ import click
 from rich.console import Console
 
 from jwtcheck import __version__
-from jwtcheck.core.checks.static import run_all_static_checks
 from jwtcheck.core.decoder import DecodeError, decode_token
 from jwtcheck.core.findings import Report
 from jwtcheck.logging_config import PhaseLogger, setup_logging
@@ -101,21 +100,20 @@ def main(
     _phase.start("CLI invocation", version=__version__)
 
     # Validate active check safety gates
-    if active:
-        if not target or not i_own_this_system:
-            console = Console()
-            console.print(
-                "[bold red]Error:[/bold red] Active checks require all three flags:",
-                style="bold",
-            )
-            console.print("  --active --target <url> --i-own-this-system")
-            console.print()
-            console.print(
-                "[yellow]Warning:[/yellow] Active checks probe a live endpoint. "
-                "Only use on systems you own or have explicit permission to test."
-            )
-            _phase.end("Active check safety gate failed", success=False)
-            sys.exit(2)
+    if active and (not target or not i_own_this_system):
+        console = Console()
+        console.print(
+            "[bold red]Error:[/bold red] Active checks require all three flags:",
+            style="bold",
+        )
+        console.print("  --active --target <url> --i-own-this-system")
+        console.print()
+        console.print(
+            "[yellow]Warning:[/yellow] Active checks probe a live endpoint. "
+            "Only use on systems you own or have explicit permission to test."
+        )
+        _phase.end("Active check safety gate failed", success=False)
+        sys.exit(2)
 
     # Setup logging
     log_to_file = not no_log_file
@@ -162,7 +160,7 @@ def main(
 
             pubkey_pem = None
             if pubkey:
-                with open(pubkey, "r") as f:
+                with open(pubkey) as f:
                     pubkey_pem = f.read()
 
             active_findings = run_all_active_checks(

@@ -12,8 +12,8 @@ import pytest
 from jwtcheck.core.decoder import DecodeError, decode_token
 from jwtcheck.tests.fixtures.tokens import (
     GOLD_STANDARD_TOKEN,
-    MALFORMED_TOKENS,
     KNOWN_BAD_TOKENS,
+    MALFORMED_TOKENS,
 )
 
 

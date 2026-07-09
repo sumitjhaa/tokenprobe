@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class Severity(Enum):
@@ -73,7 +72,7 @@ class Finding:
     message: str
     remediation: str
     source: CheckSource = CheckSource.STATIC
-    details: Optional[str] = None
+    details: str | None = None
 
     def to_dict(self) -> dict:
         """Convert finding to a dictionary for JSON serialization."""
@@ -146,7 +145,7 @@ class Report:
     findings: list[Finding] = field(default_factory=list)
     summary: Summary = field(default_factory=Summary)
     exit_code: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
     def add_finding(self, finding: Finding) -> None:
         """Add a finding and update the summary."""

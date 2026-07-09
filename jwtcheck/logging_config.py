@@ -6,12 +6,10 @@ with structured output to both console and log files.
 """
 
 import logging
-import os
 import sys
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 
 class Phase(Enum):
@@ -48,7 +46,7 @@ def _ensure_log_dir() -> None:
 def setup_logging(
     verbose: bool = False,
     log_to_file: bool = True,
-    log_dir: Optional[Path] = None,
+    log_dir: Path | None = None,
 ) -> logging.Logger:
     """
     Configure the logging system for jwtcheck.
@@ -146,7 +144,7 @@ class PhaseLogger:
     def __init__(self, component: str):
         self.logger = get_logger(f"phase.{component}")
         self.component = component
-        self._start_time: Optional[datetime] = None
+        self._start_time: datetime | None = None
 
     def start(self, description: str, **context) -> None:
         self._start_time = datetime.now()
@@ -160,7 +158,7 @@ class PhaseLogger:
         self,
         description: str,
         success: bool = True,
-        error: Optional[Exception] = None,
+        error: Exception | None = None,
         **context,
     ) -> None:
         elapsed = ""
@@ -212,7 +210,7 @@ class ErrorLogger:
     def capture(
         self,
         error: Exception,
-        context: Optional[dict] = None,
+        context: dict | None = None,
         severity: str = "error",
     ) -> None:
         ctx_str = f" | context={context}" if context else ""
@@ -226,7 +224,7 @@ class ErrorLogger:
         ctx_str = f" | {context}" if context else ""
         self.logger.warning(f"[{self.component}] {message}{ctx_str}")
 
-    def critical(self, message: str, error: Optional[Exception] = None, **context) -> None:
+    def critical(self, message: str, error: Exception | None = None, **context) -> None:
         ctx_str = f" | {context}" if context else ""
         err_str = f" | {type(error).__name__}: {error}" if error else ""
         self.logger.critical(f"[{self.component}] {message}{err_str}{ctx_str}")

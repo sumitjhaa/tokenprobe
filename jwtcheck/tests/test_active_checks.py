@@ -10,10 +10,10 @@ Tests cover:
 import pytest
 
 from jwtcheck.core.checks.active import (
-    WeakSecretBruteforceCheck,
-    AlgConfusionProbeCheck,
-    run_all_active_checks,
     ACTIVE_CHECK_REGISTRY,
+    AlgConfusionProbeCheck,
+    WeakSecretBruteforceCheck,
+    run_all_active_checks,
 )
 from jwtcheck.core.decoder import decode_token
 from jwtcheck.core.findings import Severity
@@ -25,9 +25,9 @@ class TestWeakSecretBruteforceCheck:
 
     def test_detects_weak_secret(self):
         """Should detect a token signed with 'secret'."""
-        import hmac
-        import hashlib
         import base64
+        import hashlib
+        import hmac
         import json
 
         header = {"alg": "HS256", "typ": "JWT"}
@@ -55,9 +55,9 @@ class TestWeakSecretBruteforceCheck:
 
     def test_no_finding_for_strong_secret(self):
         """Should not find a match for a strong secret."""
-        import hmac
-        import hashlib
         import base64
+        import hashlib
+        import hmac
         import json
 
         header = {"alg": "HS256", "typ": "JWT"}
@@ -89,9 +89,9 @@ class TestWeakSecretBruteforceCheck:
 
     def test_remediation_present(self):
         """Findings should include remediation guidance."""
-        import hmac
-        import hashlib
         import base64
+        import hashlib
+        import hmac
         import json
 
         header = {"alg": "HS256", "typ": "JWT"}
@@ -157,9 +157,9 @@ class TestRunAllActiveChecks:
 
     def test_returns_findings_sorted_by_severity(self):
         """Findings should be sorted by severity."""
-        import hmac
-        import hashlib
         import base64
+        import hashlib
+        import hmac
         import json
 
         header = {"alg": "HS256", "typ": "JWT"}
