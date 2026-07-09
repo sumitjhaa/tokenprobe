@@ -9,15 +9,13 @@ import time
 import pytest
 
 from jwtcheck.core.checks.engine import (
-    Check,
     CheckExecutor,
     CheckRegistry,
     CheckResult,
 )
 from jwtcheck.core.decoder import decode_token
 from jwtcheck.core.findings import Finding, Severity
-from jwtcheck.tests.fixtures.tokens import GOLD_STANDARD_TOKEN, ALG_NONE_TOKEN
-from jwtcheck.tests.test_logging import get_result_logger
+from jwtcheck.tests.fixtures.tokens import ALG_NONE_TOKEN, GOLD_STANDARD_TOKEN
 
 
 class MockCheck:

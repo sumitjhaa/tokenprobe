@@ -22,6 +22,7 @@ JWTs are the default auth token format across modern APIs, but they're commonly 
 ## Features
 
 ### Static Analysis (P0 — Offline, No Network)
+
 - ✅ Detects `alg: none` (case-insensitive)
 - ✅ Flags missing `exp`, `iat`, `aud`, `iss` claims
 - ✅ Identifies long-lived tokens (>24h validity)
@@ -32,6 +33,7 @@ JWTs are the default auth token format across modern APIs, but they're commonly 
 - ✅ CI-friendly exit codes (0 = clean, 1 = critical/high issues)
 
 ### Active Checks (P1 — Opt-in, Requires Target Endpoint)
+
 - 🔒 Weak-secret brute force against common wordlist (HS256)
 - 🔒 Algorithm confusion probe (re-sign with public key)
 - 🔒 Safety gates: requires `--active --target --i-own-this-system`
@@ -45,11 +47,13 @@ pip install jwtcheck
 ## Quick Start
 
 ### Analyze a token
+
 ```bash
 jwtcheck eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c
 ```
 
 ### Output example (text)
+
 ```
 JWT Security Analysis Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -57,18 +61,18 @@ JWT Security Analysis Report
 Found 2 security issue(s):
 
 ╭────────────────────────────────────────────────────────────╮
-│ ● HIGH    missing_exp                                       │
+│ ● HIGH    missing_exp                                      │
 │ Token has no expiration time (exp claim missing)           │
-│                                                             │
+│                                                            │
 │ Fix: Always set an expiration time (exp claim) to limit    │
 │      token validity. Recommended: 15-60 minutes for access │
 │      tokens, 7-30 days for refresh tokens.                 │
 ╰────────────────────────────────────────────────────────────╯
 
 ╭────────────────────────────────────────────────────────────╮
-│ ● MEDIUM  missing_aud                                       │
+│ ● MEDIUM  missing_aud                                      │
 │ Token has no audience claim (aud missing)                  │
-│                                                             │
+│                                                            │
 │ Fix: Include an aud (audience) claim to restrict which     │
 │      services can accept the token.                        │
 ╰────────────────────────────────────────────────────────────╯
@@ -88,40 +92,43 @@ Exit code: 1 (critical/high issues found)
 ```
 
 ### JSON output (for CI/tooling)
+
 ```bash
 jwtcheck --json $JWT_TOKEN > report.json
 ```
 
 ```json
 {
-  "token_valid_structure": true,
-  "findings": [
-    {
-      "check": "missing_exp",
-      "severity": "high",
-      "message": "Token has no expiration time (exp claim missing)",
-      "remediation": "Always set an expiration time...",
-      "source": "static"
-    }
-  ],
-  "summary": {
-    "critical": 0,
-    "high": 1,
-    "medium": 1,
-    "low": 0,
-    "info": 0,
-    "total": 2
-  },
-  "exit_code": 1
+    "token_valid_structure": true,
+    "findings": [
+        {
+            "check": "missing_exp",
+            "severity": "high",
+            "message": "Token has no expiration time (exp claim missing)",
+            "remediation": "Always set an expiration time...",
+            "source": "static"
+        }
+    ],
+    "summary": {
+        "critical": 0,
+        "high": 1,
+        "medium": 1,
+        "low": 0,
+        "info": 0,
+        "total": 2
+    },
+    "exit_code": 1
 }
 ```
 
 ### Read from stdin
+
 ```bash
 echo $JWT_TOKEN | jwtcheck
 ```
 
 ### Active checks (probe live endpoint)
+
 ```bash
 # Weak secret brute force + algorithm confusion probe
 jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
@@ -131,11 +138,13 @@ jwtcheck --active --target https://api.example.com/auth --pubkey ./server.pub --
 ```
 
 **⚠️ Active checks require all three flags:**
+
 - `--active` — Enable active checks
 - `--target <url>` — Target endpoint to probe
 - `--i-own-this-system` — Confirm authorization
 
 ### Verbose logging
+
 ```bash
 jwtcheck --verbose $JWT_TOKEN
 ```
@@ -145,19 +154,21 @@ Logs are written to `logs/jwtcheck.log`, `logs/phases.log`, and `logs/errors.log
 ## Usage in CI
 
 ### GitHub Actions example
+
 ```yaml
 - name: Audit JWT token
   run: |
-    pip install jwtcheck
-    jwtcheck --json ${{ secrets.TEST_JWT_TOKEN }} > jwt-report.json
-    if [ $? -ne 0 ]; then
-      echo "JWT security issues detected!"
-      cat jwt-report.json
-      exit 1
-    fi
+      pip install jwtcheck
+      jwtcheck --json ${{ secrets.TEST_JWT_TOKEN }} > jwt-report.json
+      if [ $? -ne 0 ]; then
+        echo "JWT security issues detected!"
+        cat jwt-report.json
+        exit 1
+      fi
 ```
 
 ### Exit codes
+
 - `0` — No critical or high severity findings
 - `1` — Critical or high severity findings present
 - `2` — Invalid input (malformed token, missing argument)
@@ -166,25 +177,26 @@ Logs are written to `logs/jwtcheck.log`, `logs/phases.log`, and `logs/errors.log
 
 ### P0 — Static Checks (Offline)
 
-| Check | Severity | Description |
-|-------|----------|-------------|
-| `alg_none` | Critical | Token uses `alg: none` — signature verification bypassed |
-| `missing_exp` | High | No expiration time (token never expires) |
-| `long_lived_token` | Medium | Token validity >24 hours |
-| `missing_iat` | Low | No issued-at timestamp |
-| `missing_aud` | Medium | No audience restriction |
-| `missing_iss` | Medium | No issuer identification |
-| `pii_in_payload` | Info | Email, phone, or SSN detected in claims |
-| `weak_alg_declared` | High | Algorithm confusion setup (HS256 + x5c/jwk) |
+| Check               | Severity | Description                                              |
+| ------------------- | -------- | -------------------------------------------------------- |
+| `alg_none`          | Critical | Token uses `alg: none` — signature verification bypassed |
+| `missing_exp`       | High     | No expiration time (token never expires)                 |
+| `long_lived_token`  | Medium   | Token validity >24 hours                                 |
+| `missing_iat`       | Low      | No issued-at timestamp                                   |
+| `missing_aud`       | Medium   | No audience restriction                                  |
+| `missing_iss`       | Medium   | No issuer identification                                 |
+| `pii_in_payload`    | Info     | Email, phone, or SSN detected in claims                  |
+| `weak_alg_declared` | High     | Algorithm confusion setup (HS256 + x5c/jwk)              |
 
 ### P1 — Active Checks (Opt-in, Requires Target)
 
-| Check | Severity | Description |
-|-------|----------|-------------|
-| `weak_secret_bruteforce` | Critical | HS256 secret found in common wordlist |
-| `alg_confusion_probe` | Critical | Endpoint accepts HS256-signed token with RSA public key |
+| Check                    | Severity | Description                                             |
+| ------------------------ | -------- | ------------------------------------------------------- |
+| `weak_secret_bruteforce` | Critical | HS256 secret found in common wordlist                   |
+| `alg_confusion_probe`    | Critical | Endpoint accepts HS256-signed token with RSA public key |
 
 **⚠️ Active checks require explicit opt-in:**
+
 ```bash
 jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT_TOKEN
 ```
@@ -228,6 +240,7 @@ for f in report.findings:
 ## Development
 
 ### Setup
+
 ```bash
 git clone https://github.com/sumitjhaa/tokenprobe.git
 cd tokenprobe
@@ -235,16 +248,19 @@ cd tokenprobe
 ```
 
 ### Run tests
+
 ```bash
 pytest
 ```
 
 ### Lint
+
 ```bash
 ruff check jwtcheck/
 ```
 
 ### Build
+
 ```bash
 pip install build
 python -m build
@@ -280,6 +296,7 @@ jwtcheck provides comprehensive logging for debugging and audit trails:
 - **`logs/errors.log`** — Error-only log with stack traces
 
 Example phase log entry:
+
 ```
 2024-01-15 14:23:45 | PHASE_START | [decoder] START: Decoding JWT token | length=245 | preview=eyJhbGciOiJIUz...
 2024-01-15 14:23:45 | PHASE_END | [decoder] END(OK): Token decoded successfully | elapsed=0.002s | algorithm=HS256
@@ -308,6 +325,7 @@ This tool is designed for **auditing systems you own or have explicit permission
 ## Contributing
 
 Contributions welcome! Please:
+
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Add tests for any new functionality
@@ -321,6 +339,7 @@ MIT License — see [LICENSE](LICENSE) file for details.
 ## Credits
 
 Built with:
+
 - [PyJWT](https://github.com/jpadilla/pyjwt) — JWT decoding
 - [Click](https://click.palletsprojects.com/) — CLI framework
 - [Rich](https://rich.readthedocs.io/) — Terminal formatting

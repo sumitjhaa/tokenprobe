@@ -16,6 +16,13 @@ from jwtcheck import __version__
 from jwtcheck.core.checks.active import ACTIVE_CHECKS
 from jwtcheck.core.checks.engine import CheckExecutor, CheckRegistry
 from jwtcheck.core.checks.static import STATIC_CHECKS
+from jwtcheck.core.config import (
+    TokenProbeConfig,
+    apply_severity_overrides,
+    build_config_checks,
+    filter_checks_by_config,
+    load_config,
+)
 from jwtcheck.core.decoder import DecodeError, decode_token
 from jwtcheck.core.findings import Report
 from jwtcheck.logging_config import PhaseLogger, setup_logging
@@ -25,16 +32,25 @@ from jwtcheck.report.text_report import render_text_report
 _phase = PhaseLogger("cli")
 
 
-def _build_registry(active: bool = False) -> CheckRegistry:
-    """Build check registry based on flags."""
+def _build_registry(active: bool = False, config: TokenProbeConfig | None = None) -> CheckRegistry:
+    """Build check registry based on flags and config."""
     registry = CheckRegistry()
 
-    for check in STATIC_CHECKS:
-        registry.register(check)
+    # Start with static checks
+    checks = list(STATIC_CHECKS)
 
+    # Add active checks if enabled
     if active:
-        for check in ACTIVE_CHECKS:
-            registry.register(check)
+        checks.extend(ACTIVE_CHECKS)
+
+    # Add config-based checks if config provided
+    if config:
+        checks.extend(build_config_checks(config))
+        checks = filter_checks_by_config(checks, config)
+
+    # Register all checks
+    for check in checks:
+        registry.register(check)
 
     return registry
 
@@ -49,6 +65,7 @@ def _build_registry(active: bool = False) -> CheckRegistry:
 @click.option("--target", type=str, help="Target endpoint for active checks")
 @click.option("--i-own-this-system", is_flag=True, help="Confirm authorization")
 @click.option("--pubkey", type=click.Path(exists=True), help="RSA public key PEM file")
+@click.option("--config", "config_path", type=click.Path(exists=True), help="Config file (TOML)")
 @click.version_option(version=__version__, prog_name="jwtcheck")
 def main(
     token: str | None,
@@ -60,6 +77,7 @@ def main(
     target: str | None,
     i_own_this_system: bool,
     pubkey: str | None,
+    config_path: str | None,
 ) -> None:
     """
     JWT Misconfiguration Checker - Audit JWT tokens for security issues.
@@ -92,6 +110,17 @@ def main(
 
     console = Console()
 
+    # Load config if provided
+    config = None
+    if config_path:
+        try:
+            config = load_config(config_path)
+            _phase.info("Config loaded", path=config_path)
+        except Exception as e:
+            console.print(f"[red]Error loading config:[/red] {e}")
+            _phase.end("Config load failed", success=False, error=e)
+            sys.exit(2)
+
     if token is None:
         if sys.stdin.isatty():
             console.print("[red]Error:[/red] No token provided.", style="bold")
@@ -112,7 +141,7 @@ def main(
         decoded = decode_token(token)
         report.token_valid_structure = True
 
-        registry = _build_registry(active=active)
+        registry = _build_registry(active=active, config=config)
         executor = CheckExecutor(registry.all_checks())
 
         context = {}
@@ -125,7 +154,12 @@ def main(
         _phase.info("Executing checks", count=len(registry))
         executor.execute_all(decoded, **context)
 
-        for finding in executor.all_findings:
+        # Get findings and apply severity overrides if config provided
+        findings = executor.all_findings
+        if config:
+            findings = apply_severity_overrides(findings, config)
+
+        for finding in findings:
             report.add_finding(finding)
 
         if executor.failed_checks:

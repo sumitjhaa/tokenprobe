@@ -8,7 +8,6 @@ Each check is isolated - errors in one don't affect others.
 from __future__ import annotations
 
 import re
-import time
 from typing import Any
 
 from jwtcheck.core.checks.engine import Check

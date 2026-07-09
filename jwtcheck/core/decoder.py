@@ -137,7 +137,7 @@ def decode_token(token: str) -> DecodedToken:
     except ValidationError as e:
         err = DecodeError(str(e))
         _error.capture(err)
-        raise err
+        raise err from e
 
     token_preview = token[:20] if len(token) > 20 else token
     _phase.start("Decoding JWT token", length=len(token), preview=token_preview)

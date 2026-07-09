@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from jwtcheck.core.decoder import DecodedToken
-from jwtcheck.core.findings import CheckSource, Finding
+from jwtcheck.core.findings import Finding
 from jwtcheck.logging_config import ErrorLogger, PhaseLogger
 
 _phase = PhaseLogger("check_engine")

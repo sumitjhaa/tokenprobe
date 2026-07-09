@@ -11,8 +11,6 @@ import base64
 import hashlib
 import hmac
 import json
-import time
-from typing import Any
 
 import requests
 
@@ -139,8 +137,8 @@ class AlgConfusionProbeCheck:
     def _fetch_public_key(self, target: str) -> str | None:
         """Fetch public key from JWKS endpoint."""
         try:
-            from cryptography.hazmat.primitives import serialization
             import jwt
+            from cryptography.hazmat.primitives import serialization
 
             jwks_url = target.rstrip("/") + "/.well-known/jwks.json"
             response = requests.get(jwks_url, timeout=5)

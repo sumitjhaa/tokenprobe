@@ -1,0 +1,56 @@
+# TokenProbe Configuration File
+# Place this file in your project root as 'tokenprobe.toml'
+# or specify with --config flag
+
+[claims]
+# Require these claims to be present in every token
+# If any are missing, a HIGH severity finding is raised
+required = ["sub", "exp", "iat", "iss", "aud"]
+
+[checks]
+# Disable specific checks by name
+# Useful if certain checks don't apply to your use case
+disable = [
+    # "pii_in_payload",
+    # "missing_iat",
+]
+
+[severity_overrides]
+# Override default severity levels for specific checks
+# Options: critical, high, medium, low, info
+# missing_exp = "critical"
+# missing_aud = "high"
+# long_lived_token = "high"
+
+# Custom pattern-based claim validation rules
+# Each rule validates a claim against a regex pattern
+
+[[custom_rules]]
+name = "sub_format"
+claim = "sub"
+pattern = "^[a-zA-Z0-9_-]+$"
+severity = "high"
+message = "Subject (sub) must be alphanumeric with hyphens/underscores only"
+
+[[custom_rules]]
+name = "iss_domain"
+claim = "iss"
+pattern = "^https://[a-z0-9.-]+\\.[a-z]{2,}$"
+severity = "medium"
+message = "Issuer (iss) must be a valid HTTPS URL"
+
+# Example: Validate role claim
+# [[custom_rules]]
+# name = "valid_role"
+# claim = "role"
+# pattern = "^(admin|user|moderator|guest)$"
+# severity = "high"
+# message = "Role must be one of: admin, user, moderator, guest"
+
+# Example: Validate org_id format
+# [[custom_rules]]
+# name = "org_id_format"
+# claim = "org_id"
+# pattern = "^org_[a-z0-9]{8,}$"
+# severity = "high"
+# message = "org_id must match format: org_<8+ alphanumeric chars>"
