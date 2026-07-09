@@ -6,6 +6,7 @@ Provides user-friendly CLI for analyzing JWT tokens.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from jwtcheck import __version__
 from jwtcheck.core.checks.active import ACTIVE_CHECKS
 from jwtcheck.core.checks.engine import CheckExecutor, CheckRegistry
 from jwtcheck.core.checks.static import STATIC_CHECKS
+from jwtcheck.core.checks.jwe import JWE_CHECKS
 from jwtcheck.core.config import (
     TokenProbeConfig,
     apply_severity_overrides,
@@ -23,7 +25,9 @@ from jwtcheck.core.config import (
     filter_checks_by_config,
     load_config,
 )
-from jwtcheck.core.decoder import DecodeError, decode_token
+from jwtcheck.core.unified_decoder import decode_jwt, is_jwe
+from jwtcheck.core.decoder import DecodeError
+from jwtcheck.core.jwe_decoder import JWEDecodeError
 from jwtcheck.core.findings import Report
 from jwtcheck.logging_config import PhaseLogger, setup_logging
 from jwtcheck.report.json_report import render_json_report
@@ -215,14 +219,34 @@ def main(
 
     try:
         _phase.info("Decoding token", length=len(token))
-        decoded = decode_token(token)
+        decoded = decode_jwt(token)
         report.token_valid_structure = True
 
-        registry = _build_registry(active=active, config=config)
+        # Determine token type and select appropriate checks
+        token_is_jwe = is_jwe(decoded)
+        if token_is_jwe:
+            _phase.info("JWE token detected, running JWE-specific checks")
+            checks = list(JWE_CHECKS)
+        else:
+            _phase.info("JWS token detected, running standard checks")
+            checks = list(STATIC_CHECKS)
+            if active:
+                checks.extend(ACTIVE_CHECKS)
+
+        # Add config-based checks if provided
+        if config:
+            checks.extend(build_config_checks(config))
+            checks = filter_checks_by_config(checks, config)
+
+        # Build registry and execute checks
+        registry = CheckRegistry()
+        for check in checks:
+            registry.register(check)
+
         executor = CheckExecutor(registry.all_checks())
 
         context = {}
-        if active:
+        if active and not token_is_jwe:
             context["target"] = target
             if pubkey:
                 with open(pubkey) as f:
@@ -248,7 +272,7 @@ def main(
 
         report.finalize()
 
-    except DecodeError as e:
+    except (DecodeError, JWEDecodeError) as e:
         _phase.end("Decode failed", success=False, error=str(e))
         report.token_valid_structure = False
         report.error = str(e)
