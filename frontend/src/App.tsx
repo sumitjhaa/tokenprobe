@@ -1,9 +1,10 @@
-import { lazy, Suspense, type FC } from "react";
+import { lazy, Suspense, useEffect, type FC } from "react";
 import Navbar from "./components/Navbar";
 import { useTheme } from "./hooks/useTheme";
 import { useHash } from "./hooks/useHash";
 import { ErrorBoundary } from "./utils/errors";
 import { Spinner } from "./components/ui/Spinner";
+import { healthCheck } from "./api/client";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 const BatchPage = lazy(() => import("./pages/BatchPage"));
@@ -29,6 +30,13 @@ export default function App() {
   const { dark, toggle } = useTheme();
   const { hash, navigate } = useHash();
   const Page = pages[hash] || HomePage;
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      healthCheck().catch(() => {});
+    }, 780_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <ErrorBoundary>

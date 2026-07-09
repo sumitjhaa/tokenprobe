@@ -14,6 +14,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export async function healthCheck(): Promise<{ status: string }> {
+  return request<{ status: string }>("/health");
+}
+
 export async function analyzeToken(token: string, config?: string): Promise<AnalyzeResult> {
   return request<AnalyzeResult>("/api/analyze", {
     method: "POST",
