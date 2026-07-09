@@ -56,6 +56,9 @@ export const THEMES: { family: "catppuccin" | "cyberpunk"; label: string; varian
       { id: "amber", label: "Amber", bg: "#0b0806", accent: "#ff9100", text: "#ffe0b2" },
       { id: "synthwave", label: "Synthwave", bg: "#0b0518", accent: "#ff00ff", text: "#e8d0ff" },
       { id: "blood", label: "Blood", bg: "#0a0406", accent: "#ff1744", text: "#ffcdd2" },
+      { id: "hack", label: "Hack", bg: "#f0fdf4", accent: "#00b341", text: "#052e16" },
+      { id: "neon-light", label: "Neon Light", bg: "#faf5ff", accent: "#d500f9", text: "#3b0764" },
+      { id: "grid", label: "Grid", bg: "#f0f7ff", accent: "#0077cc", text: "#0c1b33" },
     ],
   },
 ];
@@ -81,6 +84,7 @@ export function useTheme() {
       cyberpunk: {
         neon: "Cyberpunk Neon", dusk: "Cyberpunk Dusk", frost: "Cyberpunk Frost",
         amber: "Cyberpunk Amber", synthwave: "Cyberpunk Synthwave", blood: "Cyberpunk Blood",
+        hack: "Cyberpunk Hack", "neon-light": "Cyberpunk Neon Light", grid: "Cyberpunk Grid",
       },
     };
     setConfig({ family, variant, label: map[family]?.[variant] || `${family} ${variant}` });

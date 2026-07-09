@@ -351,6 +351,87 @@
   --shadow-lg: 0 8px 30px rgba(255, 0, 255, 0.15);
 }
 
+[data-theme="cyberpunk"][data-variant="hack"] {
+  --bg: #f0fdf4;
+  --bg-alt: #dcfce7;
+  --bg-surface: #bbf7d0;
+  --text: #052e16;
+  --text-secondary: #166534;
+  --text-muted: #4ade80;
+  --text-inverse: #f0fdf4;
+  --accent: #00b341;
+  --accent-hover: #009933;
+  --accent-soft: rgba(0, 179, 65, 0.1);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.1);
+  --success: #059669;
+  --success-soft: rgba(5, 150, 105, 0.1);
+  --info: #0284c7;
+  --info-soft: rgba(2, 132, 199, 0.1);
+  --border: #bbf7d0;
+  --border-hover: #86efac;
+  --overlay: rgba(0, 179, 65, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0, 179, 65, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 179, 65, 0.1);
+  --shadow-lg: 0 8px 30px rgba(0, 179, 65, 0.12);
+}
+
+[data-theme="cyberpunk"][data-variant="neon-light"] {
+  --bg: #faf5ff;
+  --bg-alt: #f3e8ff;
+  --bg-surface: #e9d5ff;
+  --text: #3b0764;
+  --text-secondary: #6b21a8;
+  --text-muted: #a855f7;
+  --text-inverse: #faf5ff;
+  --accent: #d500f9;
+  --accent-hover: #c000e0;
+  --accent-soft: rgba(213, 0, 249, 0.1);
+  --danger: #e91e63;
+  --danger-soft: rgba(233, 30, 99, 0.1);
+  --warning: #ff6d00;
+  --warning-soft: rgba(255, 109, 0, 0.1);
+  --success: #00c853;
+  --success-soft: rgba(0, 200, 83, 0.1);
+  --info: #2979ff;
+  --info-soft: rgba(41, 121, 255, 0.1);
+  --border: #e9d5ff;
+  --border-hover: #d8b4fe;
+  --overlay: rgba(213, 0, 249, 0.15);
+  --shadow-sm: 0 1px 3px rgba(213, 0, 249, 0.08);
+  --shadow-md: 0 4px 12px rgba(213, 0, 249, 0.1);
+  --shadow-lg: 0 8px 30px rgba(213, 0, 249, 0.12);
+}
+
+[data-theme="cyberpunk"][data-variant="grid"] {
+  --bg: #f0f7ff;
+  --bg-alt: #e0f0fe;
+  --bg-surface: #bae0fd;
+  --text: #0c1b33;
+  --text-secondary: #1e4a7a;
+  --text-muted: #4299e1;
+  --text-inverse: #f0f7ff;
+  --accent: #0077cc;
+  --accent-hover: #0066b3;
+  --accent-soft: rgba(0, 119, 204, 0.1);
+  --danger: #d92d20;
+  --danger-soft: rgba(217, 45, 32, 0.1);
+  --warning: #dc6803;
+  --warning-soft: rgba(220, 104, 3, 0.1);
+  --success: #039855;
+  --success-soft: rgba(3, 152, 85, 0.1);
+  --info: #175cd3;
+  --info-soft: rgba(23, 92, 211, 0.1);
+  --border: #bae0fd;
+  --border-hover: #7ec8f0;
+  --overlay: rgba(0, 119, 204, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0, 119, 204, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 119, 204, 0.1);
+  --shadow-lg: 0 8px 30px rgba(0, 119, 204, 0.12);
+}
+
 [data-theme="cyberpunk"][data-variant="blood"] {
   --bg: #0a0406;
   --bg-alt: #10060a;

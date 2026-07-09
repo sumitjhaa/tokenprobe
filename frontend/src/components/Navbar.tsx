@@ -35,7 +35,12 @@ export default function Navbar({ currentPath, onNavigate, onOpenTheme }: Props) 
                 onClick={(e) => { e.preventDefault(); onNavigate(link.path); }}
                 className={`nav-link${currentPath === link.path ? " active" : ""}`}
               >
-                <span className="nav-slash">//</span>
+                <span className="nav-slash">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <line x1="4" y1="12" x2="7.5" y2="2" />
+                    <line x1="8.5" y1="12" x2="12" y2="2" />
+                  </svg>
+                </span>
                 {link.label}
               </a>
             ))}
@@ -54,23 +59,10 @@ export default function Navbar({ currentPath, onNavigate, onOpenTheme }: Props) 
             </span>
             <button
               onClick={onOpenTheme}
-              style={{
-                width: "1.5rem",
-                height: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "none",
-                border: "none",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                transition: "color 0.15s ease",
-              }}
+              className="nav-theme-btn"
               aria-label="Change theme"
-              onMouseOver={(e) => e.currentTarget.style.color = "var(--accent)"}
-              onMouseOut={(e) => e.currentTarget.style.color = "var(--text-muted)"}
             >
-              <Palette size={13} />
+              <Palette size={15} />
             </button>
           </div>
         </div>
