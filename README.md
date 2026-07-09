@@ -1,10 +1,10 @@
-# JWT Misconfiguration Checker (jwtcheck)
+# TokenProbe — JWT Misconfiguration Checker
 
 A fast, offline CLI tool and Python library for auditing JWT tokens for security misconfigurations.
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
-![CI](https://github.com/jwtcheck/jwtcheck/workflows/CI/badge.svg)
+![CI](https://github.com/sumitjhaa/tokenprobe/workflows/CI/badge.svg)
 
 ## Why jwtcheck?
 
@@ -193,22 +193,32 @@ jwtcheck --active --target https://api.example.com/auth --i-own-this-system $JWT
 
 ```python
 from jwtcheck.core.decoder import decode_token
-from jwtcheck.core.checks.static import run_all_static_checks
+from jwtcheck.core.checks.engine import CheckExecutor
+from jwtcheck.core.checks.static import STATIC_CHECKS
 from jwtcheck.core.findings import Report
 
 # Decode token (no signature verification)
 token = decode_token("eyJhbGci...")
 
-# Run all static checks
-findings = run_all_static_checks(token)
+# Execute all static checks with error isolation
+executor = CheckExecutor(STATIC_CHECKS)
+executor.execute_all(token)
 
-# Build report
+# Access findings (sorted by severity)
+findings = executor.all_findings
+print(f"Found {len(findings)} issues")
+
+# Check for failures (error isolation)
+if executor.failed_checks:
+    for failed in executor.failed_checks:
+        print(f"Check {failed.check_name} failed: {failed.error_message}")
+
+# Build report for structured output
 report = Report()
 for finding in findings:
     report.add_finding(finding)
 report.finalize()
 
-# Access results
 print(f"Exit code: {report.exit_code}")
 print(f"Critical findings: {report.summary.critical}")
 for f in report.findings:
@@ -219,9 +229,9 @@ for f in report.findings:
 
 ### Setup
 ```bash
-git clone https://github.com/jwtcheck/jwtcheck.git
-cd jwtcheck
-pip install -e ".[dev]"
+git clone https://github.com/sumitjhaa/tokenprobe.git
+cd tokenprobe
+./scripts/install.sh
 ```
 
 ### Run tests
@@ -245,17 +255,20 @@ python -m build
 ```
 jwtcheck/
 ├── core/
-│   ├── decoder.py       # JWT decoding (no verification)
-│   ├── findings.py      # Finding, Severity, Report models
+│   ├── decoder.py          # JWT decoding (no verification)
+│   ├── findings.py         # Finding, Severity, Report models
+│   ├── validation.py       # Input validation & sanitization
+│   ├── wordlist.py         # Weak secrets wordlist
 │   └── checks/
-│       ├── base.py      # Check protocol
-│       └── static.py    # P0 static checks
+│       ├── engine.py       # CheckExecutor & CheckRegistry
+│       ├── static.py       # P0 static checks (8 checks)
+│       └── active.py       # P1 active checks (2 checks)
 ├── report/
-│   ├── text_report.py   # Rich terminal output
-│   └── json_report.py   # JSON output
-├── logging_config.py    # Phase + error logging
-├── cli.py               # Click CLI
-└── tests/               # 60+ unit tests
+│   ├── text_report.py      # Rich terminal output
+│   └── json_report.py      # JSON output
+├── logging_config.py       # Phase + error logging
+├── cli.py                  # Click CLI
+└── tests/                  # 142 unit tests
 ```
 
 ## Logging
@@ -315,7 +328,7 @@ Built with:
 
 ## Contact
 
-Questions, suggestions, or want to contribute? Open an issue on [GitHub](https://github.com/jwtcheck/jwtcheck/issues).
+Questions, suggestions, or want to contribute? Open an issue on [GitHub](https://github.com/sumitjhaa/tokenprobe/issues).
 
 ---
 
