@@ -30,9 +30,9 @@ export default function ConfigPage() {
   return (
     <ErrorBoundary>
       <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
-        <div className="text-center" style={{ marginBottom: "1.5rem" }}>
+        <div className="flex items-center gap-2" style={{ marginBottom: "1.5rem" }}>
           <Settings size={28} style={{ color: "var(--accent)" }} />
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginTop: "0.5rem" }}>Configuration</h1>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Configuration</h1>
         </div>
 
         <textarea

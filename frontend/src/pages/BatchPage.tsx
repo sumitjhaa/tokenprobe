@@ -29,9 +29,9 @@ export default function BatchPage() {
   return (
     <ErrorBoundary>
       <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
-        <div className="text-center" style={{ marginBottom: "1.5rem" }}>
+        <div className="flex items-center gap-2" style={{ marginBottom: "1.5rem" }}>
           <Upload size={28} style={{ color: "var(--accent)" }} />
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginTop: "0.5rem" }}>Batch Analysis</h1>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Batch Analysis</h1>
         </div>
 
         <div

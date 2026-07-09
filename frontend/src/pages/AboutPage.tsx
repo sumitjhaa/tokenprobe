@@ -21,9 +21,11 @@ export default function AboutPage() {
   return (
     <ErrorBoundary>
       <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
-        <div className="text-center" style={{ marginBottom: "2rem" }}>
-          <Shield size={28} style={{ color: "var(--accent)" }} />
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginTop: "0.5rem" }}>TokenProbe</h1>
+        <div style={{ marginBottom: "2rem" }}>
+          <div className="flex items-center gap-2">
+            <Shield size={28} style={{ color: "var(--accent)" }} />
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>TokenProbe</h1>
+          </div>
           <p style={{ fontSize: "0.9375rem", color: "var(--text-secondary)" }}>
             Security auditing tool for JWT tokens.
           </p>
