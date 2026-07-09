@@ -40,26 +40,25 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  const isHome = hash === "home" || hash === "";
-
   return (
     <ErrorBoundary>
-      <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Navbar currentPath={hash} onNavigate={navigate} onOpenTheme={() => setShowTheme(true)} />
-
-        {isHome ? (
+        <main className="container" style={{ paddingTop: "2rem", paddingBottom: "2rem", flex: 1 }}>
           <Suspense fallback={<PageFallback />}>
-            <HomePage />
+            <Page />
           </Suspense>
-        ) : (
-          <main className="container" style={{ paddingTop: "2rem", flex: 1, overflow: "auto" }}>
-            <Suspense fallback={<PageFallback />}>
-              <Page />
-            </Suspense>
-          </main>
-        )}
+        </main>
+        <footer className="footer">
+          <div className="footer-links">
+            <span>TokenProbe v1.0.0</span>
+            <span className="footer-dot">&bull;</span>
+            <span>No tokens stored or transmitted</span>
+            <span className="footer-dot">&bull;</span>
+            <span>MIT License</span>
+          </div>
+        </footer>
       </div>
-
       {showTheme && (
         <ThemeModal
           current={theme}

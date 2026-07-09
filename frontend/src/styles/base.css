@@ -13,13 +13,10 @@ html {
   background: var(--bg);
   color: var(--text);
   transition: background 0.3s ease, color 0.3s ease;
-  overflow: hidden;
-  height: 100%;
 }
 
 body {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 #root {
