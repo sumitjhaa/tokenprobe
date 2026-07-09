@@ -68,7 +68,7 @@ class TestDecodeMalformedTokens:
 
     def test_empty_string_raises(self):
         """Empty string should raise DecodeError."""
-        with pytest.raises(DecodeError, match="non-empty string"):
+        with pytest.raises(DecodeError, match="empty"):
             decode_token("")
 
     def test_none_raises(self):

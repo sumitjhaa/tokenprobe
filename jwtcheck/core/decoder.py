@@ -13,6 +13,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from jwtcheck.core.validation import ValidationError, validate_token_format
 from jwtcheck.logging_config import ErrorLogger, PhaseLogger
 
 _phase = PhaseLogger("decoder")
@@ -131,12 +132,13 @@ def decode_token(token: str) -> DecodedToken:
     Raises:
         DecodeError: If the token structure is invalid or segments cannot be decoded.
     """
-    if not isinstance(token, str) or not token.strip():
-        err = DecodeError("Token must be a non-empty string")
-        _error.capture(err, context={"token_type": type(token).__name__})
+    try:
+        token = validate_token_format(token)
+    except ValidationError as e:
+        err = DecodeError(str(e))
+        _error.capture(err)
         raise err
 
-    token = token.strip()
     token_preview = token[:20] if len(token) > 20 else token
     _phase.start("Decoding JWT token", length=len(token), preview=token_preview)
 
