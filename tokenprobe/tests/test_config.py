@@ -302,6 +302,29 @@ class TestApplySeverityOverrides:
         modified = apply_severity_overrides(findings, config)
         assert modified[0].severity == Severity.HIGH
 
+    def test_redos_pattern_rejected(self):
+        with pytest.raises(ValueError, match="nested quantifiers"):
+            config = TokenProbeConfig()
+            config.custom_rules = [
+                CustomRule(name="evil", claim="sub", pattern=r"(([a-z]+)+)$", severity="high"),
+            ]
+            errors = config.validate()
+            if errors:
+                raise ValueError(errors[0])
+
+    def test_pattern_length_limit(self):
+        config = TokenProbeConfig()
+        config.custom_rules = [
+            CustomRule(name="long", claim="sub", pattern="x" * 201, severity="high"),
+        ]
+        errors = config.validate()
+        assert any("too long" in e for e in errors)
+
+    def test_path_traversal_blocked(self):
+        from tokenprobe.core.validation import ValidationError, validate_file_path
+        with pytest.raises(ValidationError, match="Path traversal"):
+            validate_file_path("../../etc/shadow")
+
     def test_no_override_without_config(self):
         findings = [
             Finding(

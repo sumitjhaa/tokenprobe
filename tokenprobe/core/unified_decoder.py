@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from tokenprobe.core.decoder import DecodedToken, DecodeError, decode_token
 from tokenprobe.core.jwe_decoder import DecodedJWE, JWEDecodeError, decode_jwe, is_jwe_token
+from tokenprobe.core.validation import MAX_TOKEN_LENGTH
 from tokenprobe.logging_config import PhaseLogger
 
 _phase = PhaseLogger("unified_decoder")
@@ -33,6 +34,11 @@ def decode_jwt(token: str) -> DecodedJWT:
         JWEDecodeError: If the token cannot be decoded (JWE).
     """
     _phase.start("Decoding JWT", length=len(token))
+
+    if len(token) > MAX_TOKEN_LENGTH:
+        msg = f"Token too long ({len(token)} chars, max {MAX_TOKEN_LENGTH})"
+        _phase.end(msg, success=False)
+        raise DecodeError(msg)
 
     # Detect token type by part count
     if is_jwe_token(token):

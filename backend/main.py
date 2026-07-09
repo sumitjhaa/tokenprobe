@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import os
 import tempfile
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from tokenprobe.core.batch import process_batch
+from tokenprobe.core.batch import load_tokens_from_file, process_batch
 from tokenprobe.core.checks.engine import CheckExecutor, CheckRegistry
 from tokenprobe.core.checks.jwe import JWE_CHECKS
 from tokenprobe.core.checks.static import STATIC_CHECKS
@@ -23,6 +24,8 @@ from tokenprobe.core.findings import Report
 from tokenprobe.core.jwe_decoder import JWEDecodeError
 from tokenprobe.core.unified_decoder import decode_jwt, is_jwe
 
+DEBUG = os.getenv("DEBUG", "").lower() in ("1", "true", "yes")
+
 app = FastAPI(
     title="TokenProbe API",
     description="REST API for JWT security analysis",
@@ -31,16 +34,26 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+MAX_TOKEN_LENGTH = 100_000
+MAX_CONFIG_LENGTH = 50_000
+
+
 class AnalyzeRequest(BaseModel):
-    token: str = Field(..., description="JWT or JWE token to analyze")
-    config: str | None = Field(None, description="TOML configuration content")
+    token: str = Field(
+        ..., max_length=MAX_TOKEN_LENGTH,
+        description="JWT or JWE token to analyze",
+    )
+    config: str | None = Field(
+        None, max_length=MAX_CONFIG_LENGTH,
+        description="TOML configuration content",
+    )
 
 
 class AnalyzeResponse(BaseModel):
@@ -74,16 +87,19 @@ class HealthResponse(BaseModel):
     version: str
 
 
+def _sanitize_error(msg: str) -> str:
+    if DEBUG:
+        return msg
+    return msg.split("\n")[0][:200] if msg else "An internal error occurred"
+
+
 def _make_report(token: str, config_content: str | None = None) -> dict[str, Any]:
     config = None
     if config_content:
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=True) as f:
             f.write(config_content)
-            config_path = f.name
-        try:
-            config = load_config(config_path)
-        finally:
-            os.unlink(config_path)
+            f.flush()
+            config = load_config(f.name)
 
     report = Report()
     decoded = decode_jwt(token)
@@ -135,9 +151,9 @@ async def analyze_token(req: AnalyzeRequest):
         result = _make_report(req.token, req.config)
         return result
     except (ValueError, DecodeError, JWEDecodeError) as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=_sanitize_error(str(e))) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}") from e
+        raise HTTPException(status_code=500, detail=_sanitize_error(str(e))) from e
 
 
 @app.post("/api/analyze/batch", response_model=BatchResponse)
@@ -145,15 +161,18 @@ async def analyze_batch(file: UploadFile):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
+    max_size = 10 * 1024 * 1024  # 10MB
     try:
         content = await file.read()
-        text = content.decode("utf-8")
-
-        tokens = []
-        for line in text.splitlines():
-            line = line.strip()
-            if line and not line.startswith("#"):
-                tokens.append(line)
+        if len(content) > max_size:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large ({len(content)} bytes, max {max_size})",
+            )
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=True) as f:
+            f.write(content)
+            f.flush()
+            tokens = load_tokens_from_file(Path(f.name))
 
         if not tokens:
             raise HTTPException(status_code=400, detail="No tokens found in file")
@@ -161,11 +180,11 @@ async def analyze_batch(file: UploadFile):
         result = process_batch(tokens, active=False, target=None)
 
         items = []
-        for i, (token, token_result) in enumerate(zip(tokens, result.results, strict=False)):
+        for i, token_result in enumerate(result.results):
             items.append(
                 BatchResultItem(
                     index=i,
-                    token_preview=token[:40] + "..." if len(token) > 40 else token,
+                    token_preview=token_result.get("token_preview", ""),
                     findings=token_result.get("findings", []),
                     error=token_result.get("error"),
                 )
@@ -180,10 +199,12 @@ async def analyze_batch(file: UploadFile):
             severity_summary=result.severity_summary,
             results=items,
         )
+    except HTTPException:
+        raise
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=_sanitize_error(str(e))) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Batch analysis failed: {e}") from e
+        raise HTTPException(status_code=500, detail=_sanitize_error(str(e))) from e
 
 
 @app.post("/api/analyze/jwe", response_model=AnalyzeResponse)
@@ -194,9 +215,9 @@ async def analyze_jwe(req: AnalyzeRequest):
             result["error"] = "Token is not a JWE (expected 5-part structure)"
         return result
     except (ValueError, DecodeError, JWEDecodeError) as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=_sanitize_error(str(e))) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"JWE analysis failed: {e}") from e
+        raise HTTPException(status_code=500, detail=_sanitize_error(str(e))) from e
 
 
 @app.get("/api/config/schema")
@@ -239,13 +260,11 @@ class ConfigValidateResponse(BaseModel):
 
 @app.post("/api/config/validate", response_model=ConfigValidateResponse)
 async def validate_config(req: ConfigValidateRequest):
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
-        f.write(req.config)
-        path = f.name
     try:
-        load_config(path)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=True) as f:
+            f.write(req.config)
+            f.flush()
+            load_config(f.name)
         return ConfigValidateResponse(valid=True)
     except Exception as e:
         return ConfigValidateResponse(valid=False, error=str(e))
-    finally:
-        os.unlink(path)

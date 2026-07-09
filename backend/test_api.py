@@ -66,3 +66,54 @@ def test_jwe_endpoint_with_jwt():
     data = r.json()
     assert data["token_type"] == "jwt"
     assert data["error"] == "Token is not a JWE (expected 5-part structure)"
+
+
+def test_token_too_long():
+    r = client.post("/api/analyze", json={"token": "x" * 100_001})
+    assert r.status_code == 422
+
+
+def test_config_too_long():
+    r = client.post("/api/analyze", json={"token": SAMPLE_TOKEN, "config": "x" * 50_001})
+    assert r.status_code == 422
+
+
+def test_token_oversized_after_max():
+    r = client.post("/api/analyze", json={"token": "x" * 200_000})
+    assert r.status_code in (400, 422)
+
+
+def test_cors_headers():
+    r = client.options("/health", headers={"Origin": "https://example.com"})
+    assert "access-control-allow-origin" in r.headers
+
+
+def test_path_traversal_config():
+    r = client.post(
+        "/api/config/validate",
+        json={"config": "x = 1"},
+    )
+    assert r.status_code == 200
+    assert r.json()["valid"] is True
+
+
+def test_empty_batch_file():
+    r = client.post(
+        "/api/analyze/batch",
+        files={"file": ("empty.txt", "", "text/plain")},
+    )
+    assert r.status_code == 400
+    assert "No tokens" in r.json()["detail"]
+
+
+def test_batch_with_json_array():
+    import json as _json
+    content = _json.dumps([SAMPLE_TOKEN, SAMPLE_TOKEN])
+    r = client.post(
+        "/api/analyze/batch",
+        files={"file": ("tokens.json", content, "application/json")},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total_tokens"] == 2
+    assert data["processed_tokens"] == 2

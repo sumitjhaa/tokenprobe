@@ -14,10 +14,12 @@ import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import ClassVar
 
 from tokenprobe.core.checks.engine import Check
 from tokenprobe.core.decoder import DecodedToken
 from tokenprobe.core.findings import CheckSource, Finding, Severity
+from tokenprobe.core.validation import validate_file_path
 from tokenprobe.logging_config import ErrorLogger, PhaseLogger
 
 _phase = PhaseLogger("config")
@@ -33,6 +35,7 @@ class CustomRule:
     pattern: str
     severity: str = "medium"
     message: str = ""
+    MAX_PATTERN_LENGTH: ClassVar[int] = 200
 
     def __post_init__(self):
         if not self.message:
@@ -61,6 +64,12 @@ class TokenProbeConfig:
                 )
 
         for rule in self.custom_rules:
+            if len(rule.pattern) > 200:
+                errors.append(f"Regex pattern too long in rule '{rule.name}' ({len(rule.pattern)} chars, max 200)")
+                continue
+            if re.search(r'\([^)]*[+*]\)[+*]', rule.pattern):
+                errors.append(f"Potentially dangerous regex pattern in rule '{rule.name}': nested quantifiers detected")
+                continue
             try:
                 re.compile(rule.pattern)
             except re.error as e:
@@ -85,7 +94,7 @@ def load_config(config_path: str | Path) -> TokenProbeConfig:
     """
     _phase.start("Loading config", path=str(config_path))
 
-    config_path = Path(config_path)
+    config_path = Path(validate_file_path(str(config_path)))
     if not config_path.exists():
         err = FileNotFoundError(f"Config file not found: {config_path}")
         _error.capture(err)

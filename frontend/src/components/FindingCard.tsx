@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Finding } from "../types";
 import { severityTheme, severityLabel, severityIcon } from "../utils/severity";
@@ -10,7 +10,7 @@ interface Props {
   index: number;
 }
 
-export default function FindingCard({ finding, index }: Props) {
+const FindingCard = memo(function FindingCard({ finding, index }: Props) {
   const [expanded, setExpanded] = useState(false);
   const theme = severityTheme[finding.severity];
   const Icon = severityIcon[finding.severity];
@@ -64,4 +64,6 @@ export default function FindingCard({ finding, index }: Props) {
       </Card>
     </div>
   );
-}
+});
+
+export default FindingCard;

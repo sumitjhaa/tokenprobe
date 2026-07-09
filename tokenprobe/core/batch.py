@@ -21,6 +21,7 @@ from tokenprobe.core.config import (
 )
 from tokenprobe.core.decoder import DecodeError, decode_token
 from tokenprobe.core.findings import Report
+from tokenprobe.core.validation import validate_file_path
 from tokenprobe.logging_config import ErrorLogger, PhaseLogger
 
 _phase = PhaseLogger("batch")
@@ -31,14 +32,14 @@ class BatchResult:
     """Result of batch token analysis."""
 
     def __init__(self):
-        self.reports: list[Report] = []
+        self.reports: list[tuple[Report, str]] = []
         self.errors: list[dict[str, Any]] = []
         self.total_tokens = 0
         self.processed_tokens = 0
 
     def add_report(self, report: Report, token_preview: str = ""):
         """Add a report for a successfully processed token."""
-        self.reports.append(report)
+        self.reports.append((report, token_preview))
         self.processed_tokens += 1
         self.total_tokens += 1
 
@@ -48,6 +49,22 @@ class BatchResult:
         self.total_tokens += 1
 
     @property
+    def total_findings(self) -> int:
+        """Get total number of findings across all reports."""
+        return sum(len(r.findings) for r, _ in self.reports)
+
+    @property
+    def severity_summary(self) -> dict[str, int]:
+        """Get aggregated severity counts across all reports."""
+        summary = {
+            "critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0,
+        }
+        for report, _ in self.reports:
+            for finding in report.findings:
+                summary[finding.severity.value] += 1
+        return summary
+
+    @property
     def success_rate(self) -> float:
         """Calculate success rate as percentage."""
         if self.total_tokens == 0:
@@ -55,24 +72,20 @@ class BatchResult:
         return (self.processed_tokens / self.total_tokens) * 100
 
     @property
-    def total_findings(self) -> int:
-        """Get total number of findings across all reports."""
-        return sum(len(r.findings) for r in self.reports)
-
-    @property
-    def severity_summary(self) -> dict[str, int]:
-        """Get aggregated severity counts across all reports."""
-        summary = {
-            "critical": 0,
-            "high": 0,
-            "medium": 0,
-            "low": 0,
-            "info": 0,
-        }
-        for report in self.reports:
-            for finding in report.findings:
-                summary[finding.severity.value] += 1
-        return summary
+    def results(self) -> list[dict[str, Any]]:
+        """Get combined list of all token results (reports + errors) in order."""
+        combined: list[dict[str, Any]] = []
+        for report, preview in self.reports:
+            d = report.to_dict()
+            d["token_preview"] = preview
+            combined.append(d)
+        for err in self.errors:
+            combined.append({
+                "token_preview": err["token"],
+                "findings": [],
+                "error": err["error"],
+            })
+        return combined
 
     def to_dict(self) -> dict[str, Any]:
         """Convert batch result to dictionary."""
@@ -83,7 +96,7 @@ class BatchResult:
             "success_rate": self.success_rate,
             "total_findings": self.total_findings,
             "severity_summary": self.severity_summary,
-            "reports": [r.to_dict() for r in self.reports],
+            "reports": [r.to_dict() for r, _ in self.reports],
             "errors": self.errors,
         }
 
@@ -105,6 +118,7 @@ def load_tokens_from_file(file_path: Path) -> list[str]:
     """
     _phase.start("Loading tokens from file", path=str(file_path))
 
+    file_path = Path(validate_file_path(str(file_path)))
     if not file_path.exists():
         err = FileNotFoundError(f"Token file not found: {file_path}")
         _error.capture(err)
@@ -276,6 +290,7 @@ def save_batch_result(result: BatchResult, output_path: Path):
     """
     _phase.start("Saving batch result", path=str(output_path))
 
+    output_path = Path(validate_file_path(str(output_path)))
     try:
         output_path.write_text(json.dumps(result.to_dict(), indent=2))
         _phase.end("Saved batch result", success=True)

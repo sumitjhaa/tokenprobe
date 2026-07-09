@@ -1,12 +1,14 @@
-import type { FC } from "react";
+import { lazy, Suspense, type FC } from "react";
 import Navbar from "./components/Navbar";
-import HomePage from "./pages/HomePage";
-import BatchPage from "./pages/BatchPage";
-import ConfigPage from "./pages/ConfigPage";
-import AboutPage from "./pages/AboutPage";
 import { useTheme } from "./hooks/useTheme";
 import { useHash } from "./hooks/useHash";
 import { ErrorBoundary } from "./utils/errors";
+import { Spinner } from "./components/ui/Spinner";
+
+const HomePage = lazy(() => import("./pages/HomePage"));
+const BatchPage = lazy(() => import("./pages/BatchPage"));
+const ConfigPage = lazy(() => import("./pages/ConfigPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 
 const pages: Record<string, FC> = {
   home: HomePage,
@@ -14,6 +16,14 @@ const pages: Record<string, FC> = {
   config: ConfigPage,
   about: AboutPage,
 };
+
+function PageFallback() {
+  return (
+    <div className="flex justify-center py-20">
+      <Spinner size="lg" />
+    </div>
+  );
+}
 
 export default function App() {
   const { dark, toggle } = useTheme();
@@ -25,7 +35,9 @@ export default function App() {
       <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
         <Navbar dark={dark} onToggleDark={toggle} currentPath={hash} onNavigate={navigate} />
         <main className="max-w-6xl mx-auto px-4 py-12">
-          <Page />
+          <Suspense fallback={<PageFallback />}>
+            <Page />
+          </Suspense>
           <footer className="mt-16 text-center text-xs text-gray-400 dark:text-gray-600">
             TokenProbe v1.0.0 &mdash; No tokens are stored or transmitted
           </footer>
