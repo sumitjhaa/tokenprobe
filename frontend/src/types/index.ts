@@ -48,19 +48,3 @@ export interface ConfigSchema {
 }
 
 export type SeverityLevel = "critical" | "high" | "medium" | "low" | "info";
-
-export const SEVERITY_COLORS: Record<SeverityLevel, { bg: string; text: string; border: string }> = {
-  critical: { bg: "bg-red-50 dark:bg-red-950", text: "text-red-700 dark:text-red-300", border: "border-red-500" },
-  high: { bg: "bg-orange-50 dark:bg-orange-950", text: "text-orange-700 dark:text-orange-300", border: "border-orange-500" },
-  medium: { bg: "bg-yellow-50 dark:bg-yellow-950", text: "text-yellow-700 dark:text-yellow-300", border: "border-yellow-500" },
-  low: { bg: "bg-blue-50 dark:bg-blue-950", text: "text-blue-700 dark:text-blue-300", border: "border-blue-500" },
-  info: { bg: "bg-gray-50 dark:bg-gray-800", text: "text-gray-600 dark:text-gray-400", border: "border-gray-400" },
-};
-
-export const SEVERITY_LABELS: Record<SeverityLevel, string> = {
-  critical: "CRITICAL",
-  high: "HIGH",
-  medium: "MEDIUM",
-  low: "LOW",
-  info: "INFO",
-};

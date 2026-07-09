@@ -1,17 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+function getInitialDark(): boolean {
+  if (typeof window === "undefined") return false;
+  const stored = localStorage.getItem("theme");
+  if (stored) return stored === "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
 
 export function useTheme() {
-  const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem("theme");
-    if (stored) return stored === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
+  const [dark, setDark] = useState(getInitialDark);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
+    const root = document.documentElement;
+    root.classList.toggle("dark", dark);
+    root.style.colorScheme = dark ? "dark" : "light";
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
 
-  return { dark, toggle: () => setDark((d) => !d) };
+  const toggle = useCallback(() => setDark((d) => !d), []);
+
+  return { dark, toggle };
 }

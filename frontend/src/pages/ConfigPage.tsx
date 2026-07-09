@@ -1,6 +1,11 @@
 import { useState } from "react";
-import { Settings, CheckCircle, AlertCircle } from "lucide-react";
+import { Settings, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { getConfigSchema, validateConfig } from "../api/client";
+import { useApi } from "../hooks/useApi";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { ErrorBoundary } from "../utils/errors";
+import { Spinner } from "../components/ui/Spinner";
 
 const SAMPLE_CONFIG = `[claims]
 required = ["sub", "exp", "iat", "iss", "aud"]
@@ -19,135 +24,112 @@ pattern = "^(admin|user|moderator)$"
 severity = "high"
 message = "Role must be admin, user, or moderator"`;
 
+const SCHEMA_FIELDS = [
+  { key: "[claims]", desc: "required: Array of required claim keys", code: true },
+  { key: "[checks]", desc: "disable: Array of check names to skip", code: true },
+  { key: "[severity_overrides]", desc: "Override severity per check (e.g. missing_exp = \"critical\")", code: false },
+  { key: "[[custom_rules]]", desc: "Rules with: name, claim, pattern, severity, message", code: true },
+];
+
 export default function ConfigPage() {
   const [config, setConfig] = useState(SAMPLE_CONFIG);
-  const [validation, setValidation] = useState<{ valid: boolean; error: string | null } | null>(null);
-  const [schema, setSchema] = useState<Record<string, unknown> | null>(null);
   const [showSchema, setShowSchema] = useState(false);
+  const { data: schema, execute: fetchSchema, loading: schemaLoading } = useApi<Record<string, unknown>>();
+  const { data: validation, execute: runValidate, loading: validating, reset: resetValidation } = useApi<{ valid: boolean; error: string | null }>();
 
-  const handleValidate = async () => {
-    try {
-      const result = await validateConfig(config);
-      setValidation(result);
-    } catch (e) {
-      setValidation({ valid: false, error: e instanceof Error ? e.message : "Validation failed" });
-    }
-  };
-
-  const handleShowSchema = async () => {
-    if (!schema) {
-      try {
-        const data = await getConfigSchema();
-        setSchema(data as unknown as Record<string, unknown>);
-      } catch {
-        // fallback
-      }
-    }
-    setShowSchema(!showSchema);
+  const handleValidate = () => runValidate(() => validateConfig(config));
+  const handleShowSchema = () => {
+    if (!schema && !schemaLoading) fetchSchema(() => getConfigSchema().then((s) => s as unknown as Record<string, unknown>));
+    setShowSchema((v) => !v);
   };
 
   return (
-    <>
-      <div className="text-center mb-10">
-        <Settings size={32} className="mx-auto mb-3 text-blue-600 dark:text-blue-400" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          Configuration
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-          Define custom claim requirements, severity overrides, and validation rules.
-        </p>
-      </div>
+    <ErrorBoundary>
+      <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
+        <div className="text-center">
+          <Settings size={28} className="mx-auto mb-3 text-blue-600 dark:text-blue-400" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configuration</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Customize claim requirements, severity levels, and validation rules.
+          </p>
+        </div>
 
-      <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            TOML Configuration
-          </label>
-          <textarea
-            value={config}
-            onChange={(e) => { setConfig(e.target.value); setValidation(null); }}
-            className="w-full h-96 p-4 font-mono text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            spellCheck={false}
-          />
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleValidate}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Validate
-            </button>
-            <button
-              onClick={() => setConfig(SAMPLE_CONFIG)}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              Reset Sample
-            </button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              TOML Configuration
+            </label>
+            <textarea
+              value={config}
+              onChange={(e) => { setConfig(e.target.value); resetValidation(); }}
+              className="w-full h-80 p-4 font-mono text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-shadow"
+              spellCheck={false}
+            />
+            <div className="flex gap-3">
+              <Button onClick={handleValidate} loading={validating}>
+                Validate Config
+              </Button>
+              <Button variant="secondary" onClick={() => setConfig(SAMPLE_CONFIG)}>
+                Reset Sample
+              </Button>
+            </div>
+
+            {validating && (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Spinner size="sm" /> Validating...
+              </div>
+            )}
+
+            {validation && (
+              <Card
+                className={validation.valid
+                  ? "border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-950/60"
+                  : "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/60"
+                }
+                padding="md"
+              >
+                <div className="flex items-start gap-3">
+                  {validation.valid
+                    ? <CheckCircle size={18} className="text-green-600 mt-0.5 shrink-0" />
+                    : <AlertCircle size={18} className="text-red-600 mt-0.5 shrink-0" />
+                  }
+                  <div>
+                    <p className={validation.valid ? "text-green-700 dark:text-green-300 font-medium" : "text-red-700 dark:text-red-300 font-medium"}>
+                      {validation.valid ? "Valid configuration" : "Invalid configuration"}
+                    </p>
+                    {validation.error && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validation.error}</p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
 
-          {validation && (
-            <div className={`mt-4 p-4 rounded-xl flex items-start gap-3 ${
-              validation.valid
-                ? "bg-green-50 dark:bg-green-950 border border-green-300 dark:border-green-800"
-                : "bg-red-50 dark:bg-red-950 border border-red-300 dark:border-red-800"
-            }`}>
-              {validation.valid ? (
-                <CheckCircle size={18} className="text-green-600 mt-0.5 shrink-0" />
-              ) : (
-                <AlertCircle size={18} className="text-red-600 mt-0.5 shrink-0" />
-              )}
-              <div>
-                <p className={validation.valid ? "text-green-700 dark:text-green-300 font-medium" : "text-red-700 dark:text-red-300 font-medium"}>
-                  {validation.valid ? "Configuration is valid" : "Validation error"}
-                </p>
-                {validation.error && (
-                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{validation.error}</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+          <div className="space-y-4">
+            <Button variant="secondary" onClick={handleShowSchema} className="w-full">
+              {showSchema ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showSchema ? "Hide Schema" : "Show Schema"}
+            </Button>
 
-        <div>
-          <button
-            onClick={handleShowSchema}
-            className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors mb-4"
-          >
-            {showSchema ? "Hide Schema" : "Show Schema"}
-          </button>
+            {schemaLoading && <Spinner className="mx-auto" size="sm" />}
 
-          {showSchema && (
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-sm">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Config Schema</h3>
-              <div className="space-y-3">
-                <div>
-                  <code className="text-blue-600 font-mono">[claims]</code>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <code>required</code>: Array of required claim keys
-                  </p>
+            {showSchema && (
+              <Card padding="md" className="bg-gray-50 dark:bg-gray-900/50 text-sm animate-slide-down">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Schema Reference</h3>
+                <div className="space-y-3">
+                  {SCHEMA_FIELDS.map((field) => (
+                    <div key={field.key}>
+                      <code className="text-blue-600 dark:text-blue-400 font-mono text-xs">{field.key}</code>
+                      <p className="text-xs text-gray-500 mt-0.5">{field.desc}</p>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <code className="text-blue-600 font-mono">[checks]</code>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <code>disable</code>: Array of check names to skip
-                  </p>
-                </div>
-                <div>
-                  <code className="text-blue-600 font-mono">[severity_overrides]</code>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Override severity per check key
-                  </p>
-                </div>
-                <div>
-                  <code className="text-blue-600 font-mono">[[custom_rules]]</code>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Custom validation rules with: <code>name</code>, <code>claim</code>, <code>pattern</code>, <code>severity</code>, <code>message</code>
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+              </Card>
+            )}
+          </div>
         </div>
       </div>
-    </>
+    </ErrorBoundary>
   );
 }

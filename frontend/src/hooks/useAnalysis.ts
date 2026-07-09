@@ -1,30 +1,15 @@
-import { useState } from "react";
+import { useCallback } from "react";
+import { useApi } from "./useApi";
 import { analyzeToken } from "../api/client";
 import type { AnalyzeResult } from "../types";
 
 export function useAnalysis() {
-  const [result, setResult] = useState<AnalyzeResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data, loading, error, execute, reset } = useApi<AnalyzeResult>();
 
-  const analyze = async (token: string) => {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const data = await analyzeToken(token);
-      setResult(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Analysis failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const analyze = useCallback(
+    (token: string) => execute(() => analyzeToken(token)),
+    [execute],
+  );
 
-  const reset = () => {
-    setResult(null);
-    setError(null);
-  };
-
-  return { result, loading, error, analyze, reset };
+  return { result: data, loading, error, analyze, reset };
 }

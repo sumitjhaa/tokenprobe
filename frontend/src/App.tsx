@@ -6,6 +6,7 @@ import ConfigPage from "./pages/ConfigPage";
 import AboutPage from "./pages/AboutPage";
 import { useTheme } from "./hooks/useTheme";
 import { useHash } from "./hooks/useHash";
+import { ErrorBoundary } from "./utils/errors";
 
 const pages: Record<string, FC> = {
   home: HomePage,
@@ -20,14 +21,16 @@ export default function App() {
   const Page = pages[hash] || HomePage;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors">
-      <Navbar dark={dark} onToggleDark={toggle} currentPath={hash} onNavigate={navigate} />
-      <main className="max-w-6xl mx-auto px-4 py-12">
-        <Page />
-        <div className="mt-16 text-center text-xs text-gray-400 dark:text-gray-600">
-          TokenProbe v1.0.0 &mdash; No tokens are stored or transmitted
-        </div>
-      </main>
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
+        <Navbar dark={dark} onToggleDark={toggle} currentPath={hash} onNavigate={navigate} />
+        <main className="max-w-6xl mx-auto px-4 py-12">
+          <Page />
+          <footer className="mt-16 text-center text-xs text-gray-400 dark:text-gray-600">
+            TokenProbe v1.0.0 &mdash; No tokens are stored or transmitted
+          </footer>
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 }
