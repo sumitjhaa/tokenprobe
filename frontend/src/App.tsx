@@ -21,7 +21,7 @@ const pages: Record<string, FC> = {
 
 function PageFallback() {
   return (
-    <div style={{ display: "flex", justifyContent: "center", padding: "5rem 0" }}>
+    <div className="flex justify-center" style={{ padding: "5rem 0" }}>
       <Spinner size="lg" />
     </div>
   );
@@ -40,19 +40,26 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
+  const isHome = hash === "home" || hash === "";
+
   return (
     <ErrorBoundary>
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
         <Navbar currentPath={hash} onNavigate={navigate} onOpenTheme={() => setShowTheme(true)} />
-        <main className="container" style={{ paddingTop: "2rem", paddingBottom: "2rem", flex: 1 }}>
+
+        {isHome ? (
           <Suspense fallback={<PageFallback />}>
-            <Page />
+            <HomePage />
           </Suspense>
-        </main>
-        <footer className="footer">
-          TokenProbe v1.0.0 &mdash; No tokens are stored or transmitted
-        </footer>
+        ) : (
+          <main className="container" style={{ paddingTop: "2rem", flex: 1, overflow: "auto" }}>
+            <Suspense fallback={<PageFallback />}>
+              <Page />
+            </Suspense>
+          </main>
+        )}
       </div>
+
       {showTheme && (
         <ThemeModal
           current={theme}
