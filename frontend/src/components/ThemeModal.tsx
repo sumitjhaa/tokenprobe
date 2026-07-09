@@ -38,7 +38,7 @@ export default function ThemeModal({ current, onSelect, onClose }: Props) {
             }}>
               {group.label}
             </p>
-            <div className={`theme-grid theme-grid--${group.variants.length}`}>
+            <div className={`theme-grid theme-grid--${group.family}`}>
               {group.variants.map((v) => {
                 const isActive = current.family === group.family && current.variant === v.id;
                 return (

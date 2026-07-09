@@ -179,8 +179,8 @@ textarea.input {
   display: grid;
   gap: 0.5rem;
 }
-.theme-grid--4 { grid-template-columns: repeat(4, 1fr); }
-.theme-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.theme-grid--catppuccin { grid-template-columns: repeat(4, 1fr); }
+.theme-grid--cyberpunk { grid-template-columns: repeat(3, 1fr); }
 
 .theme-card {
   display: flex;
@@ -198,7 +198,7 @@ textarea.input {
 
 .theme-palette {
   position: relative;
-  height: 3.5rem;
+  height: 3rem;
   display: flex;
   align-items: flex-end;
   gap: 0.25rem;
