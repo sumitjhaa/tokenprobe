@@ -1,5 +1,4 @@
 import { Palette, Shield } from "lucide-react";
-import { cn } from "../utils/cn";
 
 interface Props {
   currentPath: string;
@@ -18,32 +17,33 @@ export default function Navbar({ currentPath, onNavigate, onOpenTheme }: Props) 
   return (
     <nav className="navbar">
       <div className="container navbar-inner">
-        <div className="flex items-center gap-6">
-          <a
-            href="#home"
-            onClick={(e) => { e.preventDefault(); onNavigate("home"); }}
-            className="flex items-center gap-2 font-bold"
-            style={{ color: "var(--text)", fontSize: "1.125rem" }}
-          >
-            <Shield size={20} style={{ color: "var(--accent)" }} />
-            TokenProbe
-          </a>
-          <div className="flex gap-1">
-            {links.map((link) => (
-              <a
-                key={link.path}
-                href={`#${link.path}`}
-                onClick={(e) => { e.preventDefault(); onNavigate(link.path); }}
-                className={cn("nav-link", currentPath === link.path && "active")}
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
+        <a
+          href="#home"
+          onClick={(e) => { e.preventDefault(); onNavigate("home"); }}
+          className="flex items-center gap-2 font-bold shrink-0"
+          style={{ color: "var(--text)", fontSize: "1rem" }}
+        >
+          <Shield size={18} style={{ color: "var(--accent)" }} />
+          TokenProbe
+        </a>
+
+        <div className="nav-tabs">
+          {links.map((link) => (
+            <a
+              key={link.path}
+              href={`#${link.path}`}
+              onClick={(e) => { e.preventDefault(); onNavigate(link.path); }}
+              className={`nav-link${currentPath === link.path ? " active" : ""}`}
+            >
+              <span className="nav-slash">//</span>
+              {link.label}
+            </a>
+          ))}
         </div>
+
         <button
           onClick={onOpenTheme}
-          className="btn btn-ghost btn-sm"
+          className="btn btn-ghost btn-sm shrink-0"
           aria-label="Change theme"
         >
           <Palette size={16} />

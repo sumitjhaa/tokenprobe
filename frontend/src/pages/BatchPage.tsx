@@ -38,9 +38,9 @@ export default function BatchPage() {
     <ErrorBoundary>
       <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "0 auto" }}>
         <div className="text-center" style={{ marginBottom: "1.5rem" }}>
-          <Upload size={28} style={{ margin: "0 auto 0.75rem", color: "var(--accent)" }} />
+          <Upload size={22} style={{ margin: "0 auto 0.75rem", color: "var(--accent)" }} />
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Batch Analysis</h1>
-          <p style={{ marginTop: "0.25rem", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+          <p style={{ marginTop: "0.25rem", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
             Upload a text file with one token per line, or a JSON array of tokens.
           </p>
         </div>
@@ -62,15 +62,15 @@ export default function BatchPage() {
           />
           {file ? (
             <div className="flex items-center justify-center gap-2">
-              <FileText size={20} style={{ color: "var(--accent)" }} />
+              <FileText size={18} style={{ color: "var(--accent)" }} />
               <span style={{ fontWeight: 500 }}>{file.name}</span>
-              <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>({(file.size / 1024).toFixed(1)} KB)</span>
+              <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>({(file.size / 1024).toFixed(1)} KB)</span>
             </div>
           ) : (
             <>
-              <Upload size={36} style={{ margin: "0 auto 0.75rem", color: "var(--text-muted)" }} />
-              <p style={{ color: "var(--text-secondary)" }}>Drop a file here or click to browse</p>
-              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>.txt (one per line) or .json</p>
+              <Upload size={32} style={{ margin: "0 auto 0.5rem", color: "var(--text-muted)" }} />
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>Drop a file here or click to browse</p>
+              <p style={{ fontSize: "0.6875rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>.txt (one per line) or .json</p>
             </>
           )}
         </div>
@@ -79,7 +79,7 @@ export default function BatchPage() {
           onClick={handleRun}
           disabled={!file}
           loading={loading}
-          style={{ width: "100%", marginTop: "1rem" }}
+          style={{ width: "100%", marginTop: "0.75rem" }}
         >
           {loading ? "Analyzing..." : `Analyze ${file ? file.name : "file"}`}
         </Button>
@@ -91,31 +91,31 @@ export default function BatchPage() {
         )}
 
         {error && (
-          <div className="card" style={{ marginTop: "1.5rem", padding: "1rem", background: "var(--danger-soft)", outline: "1px solid var(--danger)" }}>
-            <div className="flex items-start gap-3">
-              <AlertCircle size={18} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "0.125rem" }} />
-              <span style={{ fontSize: "0.875rem", color: "var(--danger)" }}>{error}</span>
+          <div style={{ marginTop: "1.25rem", padding: "0.875rem", background: "var(--danger-soft)", color: "var(--danger)", fontSize: "0.875rem" }}>
+            <div className="flex items-start gap-2">
+              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: "0.125rem" }} />
+              <span>{error}</span>
             </div>
           </div>
         )}
 
         {result && (
-          <div className="animate-fade-in" style={{ marginTop: "1.5rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
+          <div className="animate-fade-in" style={{ marginTop: "1.25rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" }}>
               {[
                 { label: "Total", value: result.total_tokens },
                 { label: "Processed", value: result.processed_tokens },
                 { label: "Failed", value: result.failed },
                 { label: "Findings", value: result.total_findings },
               ].map((stat) => (
-                <div key={stat.label} className="card stat" style={{ background: "var(--bg)" }}>
-                  <div className="stat-value">{stat.value}</div>
-                  <div className="stat-label">{stat.label}</div>
+                <div key={stat.label} style={{ padding: "0.75rem", background: "var(--bg)", textAlign: "center" }}>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 700, lineHeight: 1.2 }}>{stat.value}</div>
+                  <div style={{ fontSize: "0.6875rem", color: "var(--text-muted)", marginTop: "0.125rem" }}>{stat.label}</div>
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-2 flex-wrap" style={{ marginTop: "1rem" }}>
+            <div className="flex gap-2 flex-wrap" style={{ marginTop: "0.75rem" }}>
               {severityOrder.map((s) => {
                 const count = result.severity_summary[s] || 0;
                 if (count === 0) return null;
@@ -124,9 +124,9 @@ export default function BatchPage() {
             </div>
 
             {result.results.length > 0 && (
-              <div style={{ marginTop: "1rem" }}>
-                <h3 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Results</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+              <div style={{ marginTop: "0.75rem" }}>
+                <h3 style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Results</h3>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   {result.results.map((r) => (
                     <div key={r.index} className="batch-row">
                       <code className="truncate" style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxWidth: "70%" }}>

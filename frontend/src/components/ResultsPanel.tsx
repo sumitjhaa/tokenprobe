@@ -11,13 +11,13 @@ interface Props {
 export default function ResultsPanel({ result }: Props) {
   if (!result.token_valid_structure && result.error) {
     return (
-      <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "2rem auto 0" }}>
-        <div className="card" style={{ padding: "1.25rem", background: "var(--danger-soft)", outline: "1px solid var(--danger)" }}>
-          <div className="flex items-start gap-3">
-            <AlertTriangle size={20} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "0.125rem" }} />
+      <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "1.5rem auto 0" }}>
+        <div style={{ padding: "1rem", background: "var(--danger-soft)", color: "var(--danger)", fontSize: "0.875rem" }}>
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: "0.125rem" }} />
             <div>
-              <h2 style={{ fontWeight: 700, color: "var(--danger)" }}>Invalid Token Structure</h2>
-              <p style={{ marginTop: "0.25rem", fontSize: "0.875rem", color: "var(--danger)" }}>{result.error}</p>
+              <div style={{ fontWeight: 700 }}>Invalid Token Structure</div>
+              <div style={{ marginTop: "0.25rem" }}>{result.error}</div>
             </div>
           </div>
         </div>
@@ -27,11 +27,11 @@ export default function ResultsPanel({ result }: Props) {
 
   if (result.findings.length === 0) {
     return (
-      <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "2rem auto 0" }}>
-        <div className="card" style={{ padding: "1.5rem", background: "var(--success-soft)", outline: "1px solid var(--success)", textAlign: "center" }}>
-          <ShieldCheck size={28} style={{ margin: "0 auto 0.5rem", color: "var(--success)" }} />
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--success)" }}>No Issues Found</h2>
-          <p style={{ marginTop: "0.25rem", fontSize: "0.875rem", color: "var(--success)" }}>This token appears well-configured.</p>
+      <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "1.5rem auto 0" }}>
+        <div style={{ padding: "1.25rem", background: "var(--success-soft)", color: "var(--success)", textAlign: "center" }}>
+          <ShieldCheck size={24} style={{ margin: "0 auto 0.375rem" }} />
+          <div style={{ fontWeight: 700, fontSize: "1rem" }}>No Issues Found</div>
+          <div style={{ fontSize: "0.8125rem", marginTop: "0.125rem" }}>This token appears well-configured.</div>
         </div>
       </div>
     );
@@ -42,16 +42,16 @@ export default function ResultsPanel({ result }: Props) {
     .filter((g) => g.findings.length > 0);
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: "48rem", margin: "2rem auto 0" }}>
+    <div className="animate-fade-in findings-wrap" style={{ maxWidth: "48rem", margin: "0 auto" }}>
       <div className="summary-card">
-        <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: "0.75rem" }}>
           <div className="flex items-center gap-2">
-            <Shield size={18} style={{ color: "var(--accent)" }} />
-            <h2 style={{ fontWeight: 700 }}>
+            <Shield size={16} style={{ color: "var(--accent)" }} />
+            <h2 style={{ fontSize: "0.9375rem", fontWeight: 700 }}>
               {result.summary.total} issue{result.summary.total !== 1 ? "s" : ""} found
             </h2>
           </div>
-          <span style={{ fontSize: "0.75rem", fontFamily: "monospace", color: "var(--text-muted)", background: "var(--bg-alt)", padding: "0.25rem 0.5rem", borderRadius: "0.375rem" }}>
+          <span style={{ fontSize: "0.6875rem", fontFamily: "monospace", color: "var(--text-muted)", background: "var(--bg-alt)", padding: "0.2rem 0.4rem" }}>
             {result.token_type.toUpperCase()}
           </span>
         </div>
@@ -65,13 +65,15 @@ export default function ResultsPanel({ result }: Props) {
         </div>
       </div>
 
-      {grouped.map((group) => (
-        <div key={group.severity} style={{ marginBottom: "1rem" }}>
-          {group.findings.map((finding, i) => (
-            <FindingCard key={`${finding.check}-${i}`} finding={finding} index={i} />
-          ))}
-        </div>
-      ))}
+      <div className="finding-group">
+        {grouped.map((group) => (
+          <div key={group.severity}>
+            {group.findings.map((finding, i) => (
+              <FindingCard key={`${finding.check}-${i}`} finding={finding} index={i} />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

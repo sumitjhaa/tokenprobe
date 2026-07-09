@@ -44,7 +44,7 @@ export default function App() {
     <ErrorBoundary>
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Navbar currentPath={hash} onNavigate={navigate} onOpenTheme={() => setShowTheme(true)} />
-        <main className="container" style={{ paddingTop: "3rem", paddingBottom: "3rem", flex: 1 }}>
+        <main className="container" style={{ paddingTop: "2rem", paddingBottom: "2rem", flex: 1 }}>
           <Suspense fallback={<PageFallback />}>
             <Page />
           </Suspense>

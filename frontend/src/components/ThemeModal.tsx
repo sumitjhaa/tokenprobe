@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { X } from "lucide-react";
-import { cn } from "../utils/cn";
+import { X, Check } from "lucide-react";
 import { THEMES } from "../hooks/useTheme";
 import type { ThemeConfig } from "../hooks/useTheme";
 
@@ -21,7 +20,7 @@ export default function ThemeModal({ current, onSelect, onClose }: Props) {
     <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal-content"
-        style={{ width: "24rem", maxWidth: "calc(100vw - 2rem)" }}
+        style={{ maxWidth: "28rem", width: "calc(100vw - 2rem)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -33,23 +32,31 @@ export default function ThemeModal({ current, onSelect, onClose }: Props) {
 
         {THEMES.map((group) => (
           <div key={group.family} className="mb-4">
-            <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
+            <p style={{
+              fontWeight: 600, fontSize: "0.6875rem", color: "var(--text-muted)",
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.625rem"
+            }}>
               {group.label}
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+            <div className={`theme-grid theme-grid--${group.variants.length}`}>
               {group.variants.map((v) => {
                 const isActive = current.family === group.family && current.variant === v.id;
                 return (
                   <button
                     key={v.id}
-                    className={cn("theme-option", isActive && "active")}
+                    className={`theme-card${isActive ? " active" : ""}`}
                     onClick={() => onSelect(group.family, v.id)}
                   >
-                    <span className="theme-swatch" style={{ background: v.color }} />
-                    <div>
-                      <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{v.label}</div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{group.label} {v.label}</div>
+                    <div className="theme-palette" style={{ background: v.bg }}>
+                      <span className="theme-palette-accent" style={{ background: v.accent }} />
+                      <span className="theme-palette-text" style={{ background: v.text }} />
+                      {isActive && (
+                        <span className="theme-palette-check">
+                          <Check size={14} strokeWidth={3} />
+                        </span>
+                      )}
                     </div>
+                    <div className="theme-card-label">{v.label}</div>
                   </button>
                 );
               })}

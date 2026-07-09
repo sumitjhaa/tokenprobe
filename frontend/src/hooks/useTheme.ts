@@ -23,24 +23,32 @@ function getInitial(): ThemeConfig {
     : DEFAULT_THEME;
 }
 
-export const THEMES: { family: "catppuccin" | "cyberpunk"; label: string; variants: { id: string; label: string; color: string }[] }[] = [
+export interface ThemeVariant {
+  id: string;
+  label: string;
+  bg: string;
+  accent: string;
+  text: string;
+}
+
+export const THEMES: { family: "catppuccin" | "cyberpunk"; label: string; variants: ThemeVariant[] }[] = [
   {
     family: "catppuccin",
     label: "Catppuccin",
     variants: [
-      { id: "latte", label: "Latte", color: "#eff1f5" },
-      { id: "frappe", label: "Frappé", color: "#303446" },
-      { id: "macchiato", label: "Macchiato", color: "#24273a" },
-      { id: "mocha", label: "Mocha", color: "#11111b" },
+      { id: "latte", label: "Latte", bg: "#eff1f5", accent: "#1e66f5", text: "#4c4f69" },
+      { id: "frappe", label: "Frappé", bg: "#303446", accent: "#8caaee", text: "#c6d0f5" },
+      { id: "macchiato", label: "Macchiato", bg: "#24273a", accent: "#8aadf4", text: "#cad3f5" },
+      { id: "mocha", label: "Mocha", bg: "#11111b", accent: "#89b4fa", text: "#cdd6f4" },
     ],
   },
   {
     family: "cyberpunk",
     label: "Cyberpunk",
     variants: [
-      { id: "neon", label: "Neon", color: "#0a0a0f" },
-      { id: "dusk", label: "Dusk", color: "#0d0b15" },
-      { id: "frost", label: "Frost", color: "#0a0e1a" },
+      { id: "neon", label: "Neon", bg: "#0a0a0f", accent: "#00ff41", text: "#e0e0ff" },
+      { id: "dusk", label: "Dusk", bg: "#0d0b15", accent: "#ff6b6b", text: "#e8d8ff" },
+      { id: "frost", label: "Frost", bg: "#0a0e1a", accent: "#00d4ff", text: "#d0e4ff" },
     ],
   },
 ];

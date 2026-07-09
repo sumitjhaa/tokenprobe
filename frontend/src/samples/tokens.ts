@@ -11,6 +11,11 @@ const HS256_TOKEN =
   + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
   + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c";
 
+const ES256_TOKEN =
+  "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9."
+  + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+  + "tIWU1S6X9YxBjGn6TzVzH4pL8nR2uQ5wE7aF0dG3cV6bN9mK0oP1qR2sT3uV4wX5yZ6";
+
 export const SAMPLES: SampleToken[] = [
   {
     id: "alg-none",
@@ -172,5 +177,72 @@ export const SAMPLES: SampleToken[] = [
       + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE3MTYyMzkwMjIsImlzcyI6Imh0dHBzO"
       + "i8vYXV0aC5leGFtcGxlLmNvbSIsImF1ZCI6Imh0dHBzOi8vYXBpLmV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIifQ."
       + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c",
+  },
+  {
+    id: "jku-header",
+    label: "JKU Header Injection",
+    description: "JWK Set URL pointing to attacker-controlled endpoint",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImprdSI6Imh0dHBzOi8vYXR0YWNrZXIuZXZpbC9jbGFpbXMuanNvbiJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+      + "sK9xH6nM3vQ2wR5tY8bE1dA4cG7fJ0iL3oP6mS9uV2",
+  },
+  {
+    id: "jwk-embedded",
+    label: "Embedded JWK Header",
+    description: "Contains an inline JWK in the header — key injection vector",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImprdCI6eyJrdHkiOiJSU0EiLCJhbGciOiJSUzI1NiIsIm4iOiIweDEyMzQ1Njc4OTBhYmNkZWYwMTIzNDU2Nzg5MGFiY2RlZiIsImUiOiJBUUFCIiwia2lkIjoiZXZpbC1rZXkifX0."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+      + "dGhpcyBpcyBhIHRlc3Qgc2lnbmF0dXJl",
+  },
+  {
+    id: "expired",
+    label: "Expired Token",
+    description: "Token with exp claim set in the past (1970)",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjF9."
+      + "nK3xR4tU7vW8yZ1aB2cD5eF6gH7iJ8kL9mN0oP1qR2s",
+  },
+  {
+    id: "wildcard-aud",
+    label: "Wildcard Audience",
+    description: "Aud claim set to '*' — matches any service, a security risk",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJhdWQiOiIqIn0."
+      + "qoV0W6m7gZ5c8bQ3nX2yF1tR4pS9dK7aH0jL5wE3iU8",
+  },
+  {
+    id: "no-nbf",
+    label: "Missing Not-Before",
+    description: "No nbf claim — token is valid immediately even if issued in error",
+    category: "vulnerability",
+    token: HS256_TOKEN,
+  },
+  {
+    id: "cty-header",
+    label: "Content Type Header",
+    description: "Non-standard cty header with nested token indicator",
+    category: "edge",
+    token:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+      + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQsW5c",
+  },
+  {
+    id: "es256-token",
+    label: "ES256 with PII",
+    description: "ES256-signed token containing phone and address in payload",
+    category: "vulnerability",
+    token:
+      "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9."
+      + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicGhvbmUiOiIrMS00MTUtNTU1LTAxOTkiLCJhZGRyZXNzIjoiMTIzIE1haW4gU3QsIEFueXRvd24iLCJpYXQiOjE1MTYyMzkwMjJ9."
+      + "tIWU1S6X9YxBjGn6TzVzH4pL8nR2uQ5wE7aF0dG3cV6bN9mK0oP1qR2sT3uV4wX5yZ6",
   },
 ];
